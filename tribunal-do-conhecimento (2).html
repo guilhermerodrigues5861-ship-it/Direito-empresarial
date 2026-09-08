@@ -1,0 +1,2571 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tribunal do Conhecimento — Direito Empresarial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,500;0,600;0,700;1,500&family=Playfair+Display:wght@700;900&family=IBM+Plex+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink: #10152c;
+    --ink-2: #1b2450;
+    --ink-3: #262f5c;
+    --paper: #e9e2cd;
+    --paper-2: #ded4b8;
+    --paper-shadow: #b9ac89;
+    --stamp-red: #a5342b;
+    --stamp-red-dark: #7c241d;
+    --stamp-green: #2c6b49;
+    --stamp-green-dark: #1e4d34;
+    --gold: #c79a3d;
+    --gold-light: #e3c063;
+    --ink-text: #1c1a12;
+    --paper-text: #f2ecda;
+    --mono: 'IBM Plex Mono', monospace;
+    --serif: 'Lora', serif;
+    --display: 'Playfair Display', serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    background:
+      radial-gradient(ellipse at top, #1a2358 0%, var(--ink) 55%, #0a0d1e 100%);
+    font-family:var(--serif);
+    color:var(--paper-text);
+    overflow-x:hidden;
+    position:relative;
+  }
+
+  /* security-paper hatch texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:repeating-linear-gradient(45deg, rgba(255,255,255,0.025) 0 2px, transparent 2px 14px);
+    pointer-events:none;
+    z-index:0;
+  }
+
+  .watermark{
+    position:fixed;
+    top:50%; left:50%;
+    transform:translate(-50%,-52%) rotate(-9deg);
+    font-size:min(48vw, 620px);
+    opacity:0.045;
+    pointer-events:none;
+    z-index:0;
+    line-height:1;
+    user-select:none;
+  }
+
+  #app{
+    position:relative;
+    z-index:1;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:28px 16px 60px;
+  }
+
+  /* ===== pilha de papeis / profundidade 3D ===== */
+  .doc-stack{
+    position:relative;
+    width:100%;
+    perspective:1600px;
+  }
+  .doc-stack::before, .doc-stack::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:var(--paper-2);
+    border-radius:2px;
+    clip-path: polygon(0 0, calc(100% - 34px) 0, 100% 34px, 100% 100%, 0 100%);
+    box-shadow:0 20px 40px -18px rgba(0,0,0,0.5);
+    z-index:0;
+  }
+  .doc-stack::before{
+    transform: translate(7px,10px) rotate(1.4deg);
+    background:var(--paper-2);
+    opacity:0.9;
+  }
+  .doc-stack::after{
+    transform: translate(-6px,15px) rotate(-1.1deg);
+    background:#d6cba9;
+    opacity:0.8;
+  }
+  .doc-stack .doc{
+    position:relative;
+    z-index:1;
+    transform: rotateX(2deg) rotateY(-0.6deg);
+    transform-style:preserve-3d;
+  }
+
+  .topbar{
+    width:100%;
+    max-width:760px;
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:0 6px 18px;
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.02em;
+    color:#b9c0e8;
+    border-bottom:1px solid rgba(255,255,255,0.12);
+    margin-bottom:26px;
+  }
+  .topbar .brand{
+    font-family:var(--display);
+    font-size:1.05rem;
+    font-weight:900;
+    color:var(--gold-light);
+    letter-spacing:0.01em;
+  }
+  .topbar .case-no{opacity:0.85;}
+
+  .screen{display:none; width:100%; max-width:760px;}
+  .screen.active{display:block;}
+
+  /* ===== documento / card ===== */
+  .doc{
+    position:relative;
+    background:
+      linear-gradient(155deg, rgba(255,255,255,0.35) 0%, rgba(255,255,255,0) 18%),
+      var(--paper);
+    color:var(--ink-text);
+    border-radius:2px;
+    padding:44px 42px 38px;
+    box-shadow: 0 34px 64px -18px rgba(0,0,0,0.6), 0 10px 20px -12px rgba(0,0,0,0.4), 0 2px 0 var(--paper-shadow) inset;
+    clip-path: polygon(0 0, calc(100% - 34px) 0, 100% 34px, 100% 100%, 0 100%);
+  }
+  .doc::after{
+    content:"";
+    position:absolute; top:0; right:0;
+    width:34px; height:34px;
+    background: linear-gradient(135deg, transparent 49%, var(--paper-shadow) 50%);
+  }
+  .doc .clip{
+    position:absolute; top:-14px; left:38px;
+    width:58px; height:26px;
+    background:linear-gradient(180deg,#8b8f9a,#585b63);
+    border-radius:4px;
+    box-shadow:0 3px 6px rgba(0,0,0,0.4);
+  }
+  .doc .clip::before, .doc .clip::after{
+    content:""; position:absolute; top:8px;
+    width:8px; height:8px; border-radius:50%;
+    background:#33353b;
+  }
+  .doc .clip::before{left:9px;}
+  .doc .clip::after{right:9px;}
+
+  /* ===== intro ===== */
+  .intro-eyebrow{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    color:var(--stamp-red-dark);
+    margin:0 0 10px;
+  }
+  h1.intro-title{
+    font-family:var(--display);
+    font-size:clamp(1.9rem, 4.6vw, 3rem);
+    line-height:1.05;
+    margin:0 0 18px;
+    font-weight:900;
+  }
+  .gavel{
+    display:inline-block;
+    font-size:1em;
+    transform-origin:70% 70%;
+    animation: gavelBang 1.1s ease-out 0.15s 1;
+  }
+  @keyframes gavelBang{
+    0%{transform:rotate(-38deg) translateY(-6px);}
+    35%{transform:rotate(-38deg) translateY(-6px);}
+    45%{transform:rotate(4deg) translateY(0);}
+    52%{transform:rotate(-6deg);}
+    58%{transform:rotate(2deg);}
+    64%{transform:rotate(0deg);}
+    100%{transform:rotate(0deg);}
+  }
+
+  .ementa{
+    font-size:0.98rem;
+    line-height:1.65;
+    max-width:60ch;
+    margin:0 0 22px;
+  }
+  .ementa em{font-style:italic; color:var(--stamp-red-dark);}
+
+  .rules-list{
+    list-style:none;
+    margin:0 0 30px;
+    padding:0;
+    display:grid;
+    gap:10px;
+  }
+  .rules-list li{
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:0.92rem;
+    line-height:1.5;
+  }
+  .rules-list li .ic{font-size:1.15rem; flex:none;}
+
+  .btn{
+    font-family:var(--mono);
+    font-weight:600;
+    font-size:0.95rem;
+    letter-spacing:0.02em;
+    border:none;
+    cursor:pointer;
+    padding:15px 28px;
+    border-radius:3px;
+    color:var(--paper-text);
+    background:linear-gradient(180deg, var(--ink-3), var(--ink-2));
+    box-shadow:0 6px 0 var(--ink), 0 10px 18px rgba(0,0,0,0.4);
+    transition:transform .12s ease, box-shadow .12s ease;
+  }
+  .btn:hover{transform:translateY(-2px);}
+  .btn:active{transform:translateY(2px); box-shadow:0 3px 0 var(--ink), 0 4px 10px rgba(0,0,0,0.4);}
+  .btn.gold{
+    background:linear-gradient(180deg, var(--gold-light), var(--gold));
+    color:#2c1f05;
+    box-shadow:0 6px 0 #8a681f, 0 10px 18px rgba(0,0,0,0.35);
+  }
+  .btn.gold:active{box-shadow:0 3px 0 #8a681f;}
+  .btn:disabled{opacity:0.5; cursor:not-allowed; transform:none;}
+
+  /* ===== quiz hud ===== */
+  .hud{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    margin-bottom:16px;
+    font-family:var(--mono);
+    flex-wrap:wrap;
+  }
+  .hud-group{display:flex; gap:16px; align-items:center;}
+  .stat{
+    display:flex; align-items:center; gap:6px;
+    font-size:0.85rem;
+    color:#dfe4fb;
+  }
+  .stat .val{font-weight:700; color:var(--gold-light);}
+  .lives{display:flex; gap:4px;}
+  .lives span{font-size:1.1rem; filter:grayscale(0); transition:filter .3s, opacity .3s;}
+  .lives span.lost{filter:grayscale(1); opacity:0.25;}
+
+  .progress-track{
+    height:6px; width:100%;
+    background:rgba(255,255,255,0.12);
+    border-radius:4px;
+    overflow:hidden;
+    margin-bottom:22px;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--gold), var(--gold-light));
+    width:0%;
+    transition:width .4s ease;
+  }
+
+  .timer-track{
+    height:10px; width:100%;
+    background:rgba(0,0,0,0.15);
+    border-radius:6px;
+    overflow:hidden;
+    margin:0 0 26px;
+    border:1px solid rgba(0,0,0,0.15);
+  }
+  .timer-fill{
+    height:100%;
+    width:100%;
+    background:linear-gradient(90deg, var(--stamp-green), #6fae86);
+    transition:width 1s linear, background .4s ease;
+  }
+  .timer-fill.warn{background:linear-gradient(90deg,#b98a24,#e3c063);}
+  .timer-fill.danger{background:linear-gradient(90deg,var(--stamp-red),#e2564a);}
+
+  .case-tag{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    color:var(--stamp-red-dark);
+    margin-bottom:6px;
+  }
+  .question-text{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(1.1rem,2.6vw,1.35rem);
+    line-height:1.45;
+    margin:0 0 24px;
+  }
+
+  .options{display:grid; gap:12px; margin-bottom:6px;}
+  .option{
+    display:flex; align-items:center; gap:12px;
+    text-align:left;
+    padding:14px 16px;
+    border:1.5px solid var(--paper-shadow);
+    background:rgba(255,255,255,0.35);
+    border-radius:3px;
+    font-family:var(--serif);
+    font-size:0.98rem;
+    color:var(--ink-text);
+    cursor:pointer;
+    transition:transform .1s ease, border-color .15s ease, background .15s ease;
+  }
+  .option .letter{
+    font-family:var(--mono);
+    font-weight:700;
+    color:var(--paper-text);
+    background:var(--ink-3);
+    width:26px; height:26px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:0.78rem;
+    flex:none;
+  }
+  .option:hover:not(:disabled){border-color:var(--ink-3); transform:translateX(3px); background:rgba(255,255,255,0.55);}
+  .option:disabled{cursor:default;}
+  .option.correct{border-color:var(--stamp-green); background:rgba(44,107,73,0.18);}
+  .option.correct .letter{background:var(--stamp-green);}
+  .option.wrong{border-color:var(--stamp-red); background:rgba(165,52,43,0.18);}
+  .option.wrong .letter{background:var(--stamp-red);}
+  .option.dim{opacity:0.5;}
+
+  .stamp-wrap{
+    position:relative;
+    min-height:0;
+  }
+  .stamp{
+    position:absolute;
+    top:-10px; right:8px;
+    font-family:var(--display);
+    font-weight:900;
+    font-size:clamp(1.6rem, 4.2vw, 2.4rem);
+    letter-spacing:0.06em;
+    padding:8px 18px;
+    border:5px solid currentColor;
+    border-radius:8px;
+    transform:rotate(-11deg) scale(0);
+    opacity:0;
+    text-transform:uppercase;
+    animation:stampIn .38s cubic-bezier(.2,1.6,.4,1) forwards;
+    pointer-events:none;
+    z-index:5;
+  }
+  .stamp{
+    box-shadow:
+      0 2px 0 rgba(0,0,0,0.05) inset,
+      0 -2px 0 rgba(255,255,255,0.15) inset,
+      2px 4px 10px rgba(0,0,0,0.18);
+    background:radial-gradient(circle at 30% 20%, rgba(255,255,255,0.12), rgba(255,255,255,0) 60%);
+  }
+  .stamp.ok{color:var(--stamp-green-dark);}
+  .stamp.no{color:var(--stamp-red-dark);}
+  @keyframes stampIn{
+    0%{transform:rotate(-11deg) scale(2.4) translateZ(40px); opacity:0;}
+    55%{transform:rotate(-11deg) scale(0.9) translateZ(0); opacity:1;}
+    70%{transform:rotate(-11deg) scale(1.04);}
+    100%{transform:rotate(-11deg) scale(1); opacity:1;}
+  }
+
+  .explanation{
+    margin-top:18px;
+    padding:14px 16px;
+    background:rgba(0,0,0,0.06);
+    border-left:4px solid var(--ink-3);
+    font-size:0.88rem;
+    line-height:1.55;
+    border-radius:2px;
+    display:none;
+  }
+  .explanation.show{display:block;}
+  .explanation b{font-family:var(--mono); text-transform:uppercase; font-size:0.72rem; letter-spacing:0.03em; display:block; margin-bottom:6px; color:var(--stamp-red-dark);}
+
+  .next-row{display:flex; justify-content:flex-end; margin-top:22px;}
+
+  /* ===== juiz / taunts ===== */
+  .judge{
+    position:fixed;
+    bottom:0; right:18px;
+    width:150px;
+    height:auto;
+    z-index:20;
+    filter:drop-shadow(0 14px 18px rgba(0,0,0,0.55));
+    animation:float 3.8s ease-in-out infinite;
+    transform-origin:bottom center;
+    pointer-events:none;
+  }
+  .judge svg{display:block; width:100%; height:auto;}
+  @keyframes float{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-10px) rotate(-1deg);}}
+  .judge.bang{animation:judgeBang 0.5s ease-out;}
+  @keyframes judgeBang{
+    0%{transform:rotate(0deg);}
+    30%{transform:rotate(-6deg) translateY(-4px);}
+    55%{transform:rotate(3deg);}
+    100%{transform:rotate(0deg);}
+  }
+
+  .taunt{
+    position:fixed;
+    bottom:158px; right:20px;
+    max-width:230px;
+    background:var(--paper);
+    color:var(--ink-text);
+    padding:12px 14px;
+    border-radius:10px;
+    font-family:var(--serif);
+    font-size:0.86rem;
+    line-height:1.4;
+    box-shadow:0 10px 24px rgba(0,0,0,0.4);
+    z-index:21;
+    opacity:0;
+    transform:translateY(8px) scale(0.96);
+    transition:opacity .3s ease, transform .3s ease;
+  }
+  .taunt::after{
+    content:"";
+    position:absolute; bottom:-8px; right:26px;
+    width:16px; height:16px;
+    background:var(--paper);
+    transform:rotate(45deg);
+  }
+  .taunt.show{opacity:1; transform:translateY(0) scale(1);}
+
+  .toast{
+    position:fixed; top:22px; left:50%;
+    transform:translate(-50%,-140%);
+    background:linear-gradient(180deg,var(--gold-light),var(--gold));
+    color:#2c1f05;
+    font-family:var(--mono);
+    font-weight:700;
+    font-size:0.82rem;
+    padding:12px 20px;
+    border-radius:6px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.45);
+    z-index:30;
+    transition:transform .4s cubic-bezier(.2,1,.3,1);
+    white-space:nowrap;
+  }
+  .toast.show{transform:translate(-50%,0);}
+
+  /* ===== resultado ===== */
+  .result-eyebrow{font-family:var(--mono); font-size:0.75rem; color:var(--stamp-red-dark); margin:0 0 8px;}
+  .result-title{font-family:var(--display); font-weight:900; font-size:clamp(1.7rem,4vw,2.4rem); margin:0 0 6px;}
+  .seal{
+    width:132px; height:132px;
+    border-radius:50%;
+    border:5px double var(--gold);
+    margin:18px auto 22px;
+    display:flex; align-items:center; justify-content:center;
+    flex-direction:column;
+    background:
+      radial-gradient(circle at 32% 26%, #fff8e6 0%, #fff3cf 12%, var(--gold-light) 45%, var(--gold) 78%, #8a681f 100%);
+    color:#3a2a06;
+    font-family:var(--display); font-weight:900;
+    box-shadow:
+      0 16px 30px rgba(0,0,0,0.4),
+      0 3px 0 rgba(255,255,255,0.5) inset,
+      0 -6px 14px rgba(0,0,0,0.25) inset;
+    position:relative;
+    transform:rotate(-3deg);
+  }
+  .seal::before{
+    content:"";
+    position:absolute; inset:9px;
+    border-radius:50%;
+    border:1.5px solid rgba(58,42,6,0.35);
+    pointer-events:none;
+  }
+  .seal .rank{font-size:0.95rem; line-height:1.1; text-align:center; padding:0 8px;}
+  .result-stats{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
+    margin:0 0 26px;
+    text-align:center;
+    font-family:var(--mono);
+  }
+  .result-stats div{
+    background:rgba(0,0,0,0.06);
+    border-radius:4px;
+    padding:12px 6px;
+  }
+  .result-stats .num{display:block; font-size:1.3rem; font-weight:700; color:var(--stamp-red-dark);}
+  .result-stats .lbl{font-size:0.68rem; opacity:0.75;}
+  .result-actions{display:flex; gap:12px; flex-wrap:wrap;}
+
+  /* ===== identificação (registro) ===== */
+  .field{margin-bottom:18px;}
+  .field label{
+    display:block;
+    font-family:var(--mono);
+    font-size:0.72rem;
+    letter-spacing:0.03em;
+    color:var(--stamp-red-dark);
+    margin-bottom:6px;
+  }
+  .field input{
+    width:100%;
+    font-family:var(--serif);
+    font-size:1rem;
+    padding:12px 14px;
+    border:1.5px solid var(--paper-shadow);
+    border-radius:3px;
+    background:rgba(255,255,255,0.45);
+    color:var(--ink-text);
+    box-shadow:0 2px 4px rgba(0,0,0,0.06) inset;
+  }
+  .field input:focus{outline:none; border-color:var(--ink-3); background:rgba(255,255,255,0.7);}
+  .field .hint{font-size:0.78rem; opacity:0.7; margin-top:5px;}
+  .field.error input{border-color:var(--stamp-red);}
+  .field .err-msg{display:none; color:var(--stamp-red-dark); font-size:0.78rem; margin-top:5px; font-family:var(--mono);}
+  .field.error .err-msg{display:block;}
+
+  .teacher-link{
+    margin-top:18px;
+    text-align:center;
+  }
+  .teacher-link button{
+    background:none; border:none; cursor:pointer;
+    font-family:var(--mono); font-size:0.74rem;
+    color:#8891bd; letter-spacing:0.02em;
+    text-decoration:underline;
+    padding:4px;
+  }
+  .teacher-link button:hover{color:var(--gold-light);}
+
+  /* ===== painel do professor ===== */
+  .teacher-doc{max-width:920px;}
+  .teacher-gate{max-width:380px; margin:0 auto;}
+  .teacher-topbar{
+    display:flex; justify-content:space-between; align-items:center;
+    gap:10px; margin-bottom:18px; flex-wrap:wrap;
+  }
+  .teacher-stats{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+    gap:10px; margin-bottom:20px;
+  }
+  .teacher-stats div{
+    background:rgba(0,0,0,0.06);
+    border-radius:4px; padding:12px 10px; text-align:center;
+    font-family:var(--mono);
+  }
+  .teacher-stats .num{display:block; font-size:1.3rem; font-weight:700; color:var(--stamp-red-dark);}
+  .teacher-stats .lbl{font-size:0.66rem; opacity:0.75;}
+  .teacher-toolbar{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;}
+  .teacher-toolbar input[type=text]{
+    flex:1; min-width:180px;
+    font-family:var(--serif); padding:9px 12px;
+    border:1.5px solid var(--paper-shadow); border-radius:3px;
+    background:rgba(255,255,255,0.45); color:var(--ink-text);
+  }
+  .btn.small{padding:9px 16px; font-size:0.8rem; box-shadow:0 4px 0 var(--ink), 0 6px 12px rgba(0,0,0,0.35);}
+  .btn.small:active{box-shadow:0 2px 0 var(--ink);}
+  .table-wrap{overflow-x:auto; margin-bottom:8px;}
+  table.roster{
+    width:100%; border-collapse:collapse;
+    font-family:var(--serif); font-size:0.86rem;
+  }
+  table.roster th{
+    text-align:left; font-family:var(--mono); font-size:0.68rem;
+    letter-spacing:0.03em; color:var(--stamp-red-dark);
+    padding:8px 10px; border-bottom:2px solid var(--paper-shadow);
+    white-space:nowrap;
+  }
+  table.roster td{
+    padding:9px 10px; border-bottom:1px solid rgba(0,0,0,0.08);
+    vertical-align:top;
+  }
+  table.roster tr:hover td{background:rgba(0,0,0,0.03);}
+  table.roster td.num{font-family:var(--mono); font-weight:700;}
+  .roster-empty{
+    text-align:center; padding:34px 10px; opacity:0.7;
+    font-family:var(--mono); font-size:0.85rem;
+  }
+  .pill{
+    display:inline-block; padding:2px 8px; border-radius:20px;
+    font-family:var(--mono); font-size:0.68rem;
+    background:rgba(44,107,73,0.15); color:var(--stamp-green-dark);
+  }
+  .pill.low{background:rgba(165,52,43,0.15); color:var(--stamp-red-dark);}
+  .pill.mid{background:rgba(199,154,61,0.2); color:#8a681f;}
+
+  .tabs-row{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
+  .tab-btn{opacity:0.55;}
+  .tab-btn.active{opacity:1;}
+  .btn.gold-outline{
+    background:transparent;
+    border:1.5px solid var(--gold);
+    color:var(--gold-light);
+    box-shadow:none;
+  }
+  .btn.gold-outline:active{transform:translateY(1px);}
+
+  .qform{
+    background:rgba(0,0,0,0.05);
+    border:1px dashed var(--paper-shadow);
+    border-radius:4px;
+    padding:18px;
+    margin-bottom:20px;
+  }
+  .qform textarea{
+    width:100%;
+    font-family:var(--serif);
+    font-size:0.95rem;
+    padding:10px 12px;
+    border:1.5px solid var(--paper-shadow);
+    border-radius:3px;
+    background:rgba(255,255,255,0.45);
+    color:var(--ink-text);
+    resize:vertical;
+  }
+  .qform-options{display:grid; gap:10px; margin-bottom:16px;}
+  .qform-opt{display:flex; align-items:center; gap:8px;}
+  .qform-opt input[type=radio]{flex:none; width:18px; height:18px; accent-color:var(--stamp-green-dark);}
+  .qform-opt input[type=text]{
+    flex:1;
+    font-family:var(--serif); font-size:0.92rem;
+    padding:9px 12px;
+    border:1.5px solid var(--paper-shadow); border-radius:3px;
+    background:rgba(255,255,255,0.45); color:var(--ink-text);
+  }
+  .qform-opt .opt-letter{
+    font-family:var(--mono); font-weight:700; font-size:0.72rem;
+    width:20px; text-align:center; flex:none; opacity:0.7;
+  }
+
+  .qrow{
+    border-bottom:1px solid rgba(0,0,0,0.1);
+    padding:12px 4px;
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:14px;
+  }
+  .qrow-main{flex:1; min-width:0;}
+  .qrow-topic{
+    font-family:var(--mono); font-size:0.68rem;
+    color:var(--stamp-red-dark); margin-bottom:3px;
+  }
+  .qrow-text{font-size:0.92rem; line-height:1.4;}
+  .qrow-actions{display:flex; gap:6px; flex:none; flex-wrap:wrap;}
+  .qrow-actions button{
+    background:none; border:1px solid var(--paper-shadow);
+    border-radius:3px; padding:5px 10px; cursor:pointer;
+    font-family:var(--mono); font-size:0.68rem; color:var(--ink-text);
+  }
+  .qrow-actions button:hover{border-color:var(--ink-3);}
+  .qrow-actions button.danger{color:var(--stamp-red-dark); border-color:var(--stamp-red);}
+
+  canvas#confetti{
+    position:fixed; inset:0; width:100%; height:100%;
+    pointer-events:none; z-index:40;
+  }
+
+  @media (max-width:520px){
+    .doc{padding:32px 22px 28px;}
+    .result-actions{flex-direction:column;}
+    .judge{width:96px; right:10px;}
+    .taunt{right:8px; bottom:106px; max-width:190px;}
+    .doc-stack::before, .doc-stack::after{display:none;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001s !important; transition-duration:0.001s !important;}
+  }
+</style>
+</head>
+<body>
+
+<div class="watermark">⚖️</div>
+
+<div id="app">
+  <div class="topbar">
+    <span class="brand">Tribunal do Conhecimento</span>
+    <span class="case-no">Processo nº 0001/2026 — Vara Empresarial</span>
+  </div>
+
+  <!-- IDENTIFICAÇÃO -->
+  <section id="screen-register" class="screen active">
+    <div class="doc-stack">
+    <div class="doc">
+      <div class="clip"></div>
+      <p class="intro-eyebrow">Qualificação das partes</p>
+      <h1 class="intro-title">Antes de tudo, quem está aqui?</h1>
+      <p class="ementa">
+        Toda petição precisa qualificar quem a assina. Informe seu nome completo e seu
+        e-mail institucional — é assim que o professor vai localizar sua nota no painel da turma.
+      </p>
+      <form id="register-form" novalidate>
+        <div class="field" id="field-name">
+          <label for="reg-name">Nome completo</label>
+          <input type="text" id="reg-name" autocomplete="name" placeholder="Ex.: Maria da Silva Souza" required>
+          <span class="err-msg">Informe seu nome completo.</span>
+        </div>
+        <div class="field" id="field-email">
+          <label for="reg-email">E-mail institucional</label>
+          <input type="email" id="reg-email" autocomplete="email" placeholder="Ex.: maria.souza@unifenas.br" required>
+          <p class="hint" id="email-hint">Use o e-mail fornecido pela sua instituição de ensino.</p>
+          <span class="err-msg">Informe um e-mail institucional válido.</span>
+        </div>
+        <button type="submit" class="btn gold">Confirmar e abrir o processo →</button>
+      </form>
+      <div class="teacher-link"><button type="button" id="btn-open-teacher">👩‍⚖️ Painel do professor</button></div>
+    </div>
+    </div>
+  </section>
+
+  <!-- INTRO -->
+  <section id="screen-intro" class="screen">
+    <div class="doc-stack">
+    <div class="doc">
+      <div class="clip"></div>
+      <p class="intro-eyebrow">Autos em segredo de justiça</p>
+      <h1 class="intro-title"><span class="gavel">
+        <svg width="1em" height="1em" viewBox="0 0 40 40" style="vertical-align:-0.15em">
+          <defs><linearGradient id="gvl" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#c98d4f"/><stop offset="0.5" stop-color="#8a5a2b"/><stop offset="1" stop-color="#5c3a1a"/>
+          </linearGradient></defs>
+          <rect x="21" y="3" width="7" height="20" rx="2" fill="url(#gvl)" transform="rotate(35 24.5 13)"/>
+          <rect x="6" y="14" width="18" height="9" rx="2" fill="url(#gvl)" transform="rotate(35 15 18.5)"/>
+          <rect x="3" y="30" width="20" height="5" rx="1.5" fill="#3a2a06"/>
+        </svg>
+      </span> Você será interrogado(a) sobre Direito Empresarial.</h1>
+      <p class="ementa" id="welcome-line">
+        <em>Vistos, relatados e ainda não muito discutidos os presentes autos:</em>
+        questões sobre empresário, sociedades, títulos de crédito, recuperação judicial,
+        recuperação especial, recuperação extrajudicial e propriedade industrial aguardam sua manifestação.
+        A banca é exigente. O tempo, curto. E o juiz aqui do canto adora comentar.
+      </p>
+      <ul class="rules-list">
+        <li><span class="ic">📜</span> Feito individual — este processo corre em segredo de justiça, vedada a consulta a colegas, apostilas ou inteligências artificiais.</li>
+        <li><span class="ic">⏱️</span> Cada questão tem 30 segundos. Estourou o prazo, o juiz decide por você (e raramente é a seu favor).</li>
+        <li><span class="ic">❤️</span> Você tem 3 recursos (chances). Errar consome um recurso — zerou, o processo é julgado à revelia.</li>
+        <li><span class="ic">🏅</span> Acertos em sequência valem bônus e podem render uma promoção de patente ao final.</li>
+      </ul>
+      <button class="btn gold" id="btn-start">Abrir o processo →</button>
+    </div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section id="screen-quiz" class="screen">
+    <div class="hud">
+      <div class="hud-group">
+        <div class="stat">Processo <span class="val" id="q-index">1</span>/<span id="q-total">14</span></div>
+        <div class="stat">🪙 Honorários: <span class="val" id="score-val">0</span></div>
+      </div>
+      <div class="hud-group">
+        <div class="stat">🔥 <span class="val" id="streak-val">0</span></div>
+        <div class="lives" id="lives-box">
+          <span>❤️</span><span>❤️</span><span>❤️</span>
+        </div>
+      </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+
+    <div class="doc-stack">
+    <div class="doc">
+      <div class="clip"></div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+      <p class="case-tag" id="case-tag">Matéria: Direito Empresarial</p>
+      <p class="question-text" id="question-text">Carregando petição...</p>
+      <div class="stamp-wrap">
+        <div class="options" id="options-box"></div>
+        <div class="explanation" id="explanation"><b>Fundamentação</b><span id="explanation-text"></span></div>
+      </div>
+      <div class="next-row">
+        <button class="btn" id="btn-next" style="display:none;">Próximo processo →</button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- RESULTADO -->
+  <section id="screen-result" class="screen">
+    <div class="doc-stack">
+    <div class="doc" style="text-align:center;">
+      <div class="clip"></div>
+      <p class="result-eyebrow" id="result-eyebrow">Sentença</p>
+      <h2 class="result-title" id="result-title">Processo julgado</h2>
+      <div class="seal"><span class="rank" id="result-rank">Estagiário(a)</span></div>
+      <div class="result-stats">
+        <div><span class="num" id="stat-correct">0</span><span class="lbl">acertos</span></div>
+        <div><span class="num" id="stat-score">0</span><span class="lbl">honorários</span></div>
+        <div><span class="num" id="stat-pct">0%</span><span class="lbl">aproveitamento</span></div>
+      </div>
+      <p id="result-msg" style="font-size:0.95rem; line-height:1.6; max-width:52ch; margin:0 auto 26px;"></p>
+      <p id="result-saved" style="font-family:var(--mono); font-size:0.72rem; opacity:0.65; margin:0 0 22px;"></p>
+      <div class="result-actions" style="justify-content:center;">
+        <button class="btn gold" id="btn-restart">Recorrer da sentença (refazer)</button>
+      </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- PAINEL DO PROFESSOR -->
+  <section id="screen-teacher" class="screen">
+    <div class="doc-stack teacher-doc">
+    <div class="doc">
+      <div class="clip"></div>
+
+      <div id="teacher-gate" class="teacher-gate">
+        <p class="intro-eyebrow">Acesso restrito</p>
+        <h1 class="intro-title" style="font-size:1.6rem;">Painel do professor</h1>
+        <p class="ementa" style="max-width:100%;">Digite a senha de acesso para acompanhar as notas da turma.</p>
+        <div class="field" id="field-teacher-pass">
+          <label for="teacher-pass">Senha</label>
+          <input type="password" id="teacher-pass" autocomplete="off">
+          <span class="err-msg">Senha incorreta.</span>
+        </div>
+        <button class="btn gold" id="btn-teacher-login">Entrar →</button>
+        <div class="teacher-link"><button type="button" id="btn-back-from-gate">← Voltar</button></div>
+      </div>
+
+      <div id="teacher-dashboard" style="display:none;">
+        <div class="teacher-topbar">
+          <div>
+            <p class="intro-eyebrow" style="margin-bottom:2px;">Painel do professor</p>
+            <h1 class="intro-title" style="font-size:1.5rem; margin-bottom:0;" id="teacher-heading">Notas da turma</h1>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            <button class="btn small" id="btn-teacher-logout">Sair</button>
+          </div>
+        </div>
+
+        <div class="tabs-row">
+          <button class="btn small tab-btn active" id="tab-btn-notas" type="button">📋 Notas da turma</button>
+          <button class="btn small tab-btn" id="tab-btn-perguntas" type="button">📝 Perguntas do quiz</button>
+        </div>
+
+        <!-- ABA NOTAS -->
+        <div id="tab-notas">
+          <div class="teacher-toolbar" style="margin-top:16px;">
+            <input type="text" id="teacher-search" placeholder="Buscar por nome ou e-mail...">
+            <button class="btn small" id="btn-refresh">↻ Atualizar</button>
+            <button class="btn small" id="btn-export">⇩ Exportar CSV</button>
+          </div>
+          <div class="teacher-stats" id="teacher-stats"></div>
+          <div class="table-wrap">
+            <table class="roster" id="roster-table">
+              <thead>
+                <tr>
+                  <th>Aluno(a)</th>
+                  <th>E-mail institucional</th>
+                  <th>Acertos</th>
+                  <th>%</th>
+                  <th>Honorários</th>
+                  <th>Patente</th>
+                  <th>Data</th>
+                </tr>
+              </thead>
+              <tbody id="roster-body"></tbody>
+            </table>
+            <p class="roster-empty" id="roster-empty" style="display:none;">Nenhum processo julgado ainda. Assim que os alunos concluírem o quiz, os resultados aparecem aqui.</p>
+          </div>
+        </div>
+
+        <!-- ABA PERGUNTAS -->
+        <div id="tab-perguntas" style="display:none;">
+          <div class="teacher-toolbar" style="margin-top:16px;">
+            <input type="text" id="question-search" placeholder="Buscar por matéria ou texto da pergunta...">
+            <button class="btn small gold-outline" id="btn-new-question">+ Nova pergunta</button>
+            <button class="btn small" id="btn-reset-questions">↺ Restaurar originais</button>
+          </div>
+          <p class="hint" id="question-count-hint" style="margin-bottom:14px;"></p>
+
+          <!-- formulário (nova / edição) -->
+          <div id="question-form-wrap" style="display:none;">
+            <div class="qform">
+              <input type="hidden" id="qf-id">
+              <div class="field">
+                <label for="qf-topic">Matéria</label>
+                <input type="text" id="qf-topic" placeholder="Ex.: Recuperação Judicial">
+              </div>
+              <div class="field">
+                <label for="qf-question">Pergunta</label>
+                <textarea id="qf-question" rows="2" placeholder="Enunciado da pergunta"></textarea>
+              </div>
+              <div class="qform-options" id="qf-options"></div>
+              <div class="field">
+                <label for="qf-exp">Fundamentação (explicação exibida após responder)</label>
+                <textarea id="qf-exp" rows="2" placeholder="Base legal / explicação da resposta correta"></textarea>
+              </div>
+              <span class="err-msg" id="qf-err" style="display:none;">Preencha a matéria, a pergunta, todas as alternativas e marque a correta.</span>
+              <div style="display:flex; gap:10px; margin-top:6px; flex-wrap:wrap;">
+                <button class="btn gold small" id="btn-save-question" type="button">Salvar pergunta</button>
+                <button class="btn small" id="btn-cancel-question" type="button">Cancelar</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="question-list"></div>
+        </div>
+      </div>
+
+    </div>
+    </div>
+  </section>
+</div>
+
+<div class="judge" id="judge">
+  <svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="robeGrad" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#333a5c"/>
+        <stop offset="0.5" stop-color="#1b2044"/>
+        <stop offset="1" stop-color="#0c0f24"/>
+      </linearGradient>
+      <linearGradient id="robeShine" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#5763a3" stop-opacity="0.55"/>
+        <stop offset="1" stop-color="#5763a3" stop-opacity="0"/>
+      </linearGradient>
+      <radialGradient id="skinGrad" cx="0.38" cy="0.32" r="0.75">
+        <stop offset="0" stop-color="#f4c9a4"/>
+        <stop offset="0.7" stop-color="#dba576"/>
+        <stop offset="1" stop-color="#b9814f"/>
+      </radialGradient>
+      <linearGradient id="gvlWood" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#d19a5c"/>
+        <stop offset="0.5" stop-color="#93602f"/>
+        <stop offset="1" stop-color="#603c1a"/>
+      </linearGradient>
+      <radialGradient id="benchGrad" cx="0.5" cy="0" r="1">
+        <stop offset="0" stop-color="#4a3319"/>
+        <stop offset="1" stop-color="#26190c"/>
+      </radialGradient>
+    </defs>
+
+    <ellipse cx="100" cy="252" rx="82" ry="10" fill="#000" opacity="0.28"/>
+
+    <!-- bancada -->
+    <rect x="14" y="200" width="172" height="52" rx="6" fill="url(#benchGrad)"/>
+    <rect x="14" y="200" width="172" height="10" rx="4" fill="#5c3f20"/>
+
+    <!-- toga / corpo -->
+    <path d="M46 250 C40 175 55 118 100 112 C145 118 160 175 154 250 Z" fill="url(#robeGrad)"/>
+    <path d="M46 250 C40 175 55 118 100 112 C145 118 160 175 154 250 Z" fill="url(#robeShine)"/>
+    <path d="M100 112 C93 150 93 205 98 250" stroke="#000" stroke-opacity="0.25" stroke-width="3" fill="none"/>
+    <path d="M78 122 C70 165 68 210 72 250" stroke="#000" stroke-opacity="0.18" stroke-width="4" fill="none"/>
+    <path d="M122 122 C130 165 132 210 128 250" stroke="#000" stroke-opacity="0.18" stroke-width="4" fill="none"/>
+
+    <!-- gola / colarinho -->
+    <path d="M78 118 L100 138 L122 118 L128 130 L100 152 L72 130 Z" fill="#f4efe1"/>
+    <rect x="93" y="128" width="14" height="34" fill="#f4efe1"/>
+    <rect x="93" y="128" width="14" height="34" fill="#000" opacity="0.06"/>
+
+    <!-- cabeca -->
+    <ellipse cx="100" cy="82" rx="38" ry="42" fill="url(#skinGrad)"/>
+    <!-- cabelo/beca de juiz (touca) -->
+    <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78 C138 55 122 44 100 44 C78 44 62 55 62 78 Z" fill="#12162e"/>
+    <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78" fill="none" stroke="#3b4374" stroke-width="2" opacity="0.6"/>
+    <!-- rosto -->
+    <ellipse cx="85" cy="82" rx="4.2" ry="5.2" fill="#241c14"/>
+    <ellipse cx="115" cy="82" rx="4.2" ry="5.2" fill="#241c14"/>
+    <path d="M83 100 Q100 110 117 100" stroke="#7a4c30" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M74 70 Q85 63 96 69" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M104 69 Q115 63 126 70" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
+
+    <!-- braco + martelo -->
+    <path d="M150 150 C168 158 178 172 176 190 L160 196 C158 178 150 168 138 160 Z" fill="url(#robeGrad)"/>
+    <g transform="translate(150,152) rotate(-28)">
+      <rect x="-6" y="-34" width="12" height="34" rx="4" fill="url(#gvlWood)"/>
+      <rect x="-20" y="-46" width="40" height="18" rx="5" fill="url(#gvlWood)"/>
+      <rect x="-20" y="-46" width="40" height="5" rx="2.5" fill="#f2d9ad" opacity="0.4"/>
+    </g>
+  </svg>
+</div>
+<div class="taunt" id="taunt"></div>
+<div class="toast" id="toast"></div>
+<canvas id="confetti"></canvas>
+
+<script>
+(function(){
+  "use strict";
+
+  var DEFAULT_QUESTIONS = [
+    {
+      id: "q1",
+      topic: "Direito Empresarial Geral",
+      q: "Segundo o Código Civil, considera-se empresário quem exerce profissionalmente:",
+      options: [
+        "Atividade intelectual de natureza científica, literária ou artística",
+        "Atividade econômica organizada para a produção ou circulação de bens ou serviços",
+        "Atividade de natureza exclusivamente rural, ainda que sem qualquer registro",
+        "Qualquer atividade lucrativa, ainda que eventual"
+      ],
+      correct: 1,
+      exp: "Art. 966 do Código Civil. O exercício de profissão intelectual, científica, literária ou artística não é considerado empresarial, salvo se constituir elemento de empresa."
+    },
+    {
+      id: "q2",
+      topic: "Direito Empresarial Geral",
+      q: "Na sociedade limitada, a responsabilidade dos sócios é, em regra:",
+      options: [
+        "Ilimitada, alcançando todo o patrimônio pessoal de cada sócio",
+        "Restrita ao valor de suas quotas, respondendo todos solidariamente pela integralização do capital social",
+        "Limitada apenas ao sócio administrador",
+        "Inexistente, já que a sociedade responde sozinha por tudo"
+      ],
+      correct: 1,
+      exp: "Art. 1.052 do Código Civil: cada sócio responde pelo valor de suas quotas, mas todos respondem solidariamente pela integralização do capital social."
+    },
+    {
+      id: "q3",
+      topic: "Direito Empresarial Geral",
+      q: "O que diferencia, essencialmente, uma marca de uma patente?",
+      options: [
+        "Marca protege invenções; patente protege sinais distintivos",
+        "Marca identifica produtos ou serviços; patente protege invenções e modelos de utilidade",
+        "Ambas protegem exatamente o mesmo tipo de bem imaterial",
+        "Marca tem proteção perpétua; patente nunca expira"
+      ],
+      correct: 1,
+      exp: "Lei 9.279/96 (LPI): a marca distingue produtos/serviços no mercado; a patente protege invenções e modelos de utilidade."
+    },
+    {
+      id: "q4",
+      topic: "Direito Empresarial Geral",
+      q: "Sobre a Sociedade Anônima (S.A.), assinale a alternativa correta:",
+      options: [
+        "O capital social é dividido em quotas",
+        "O capital é dividido em ações e a responsabilidade do acionista se limita ao preço de emissão das ações que possui",
+        "É sempre fechada, jamais podendo negociar ações em bolsa",
+        "É classificada como sociedade de pessoas, nunca de capital"
+      ],
+      correct: 1,
+      exp: "Lei 6.404/76, art. 1º: capital dividido em ações; a responsabilidade do acionista é limitada ao preço de emissão das ações subscritas ou adquiridas."
+    },
+    {
+      id: "q5",
+      topic: "Direito Empresarial Geral",
+      q: "Qual título de crédito representa uma ordem de pagamento à vista, sacada contra uma instituição bancária?",
+      options: [
+        "Nota promissória",
+        "Duplicata",
+        "Cheque",
+        "Letra de câmbio"
+      ],
+      correct: 2,
+      exp: "O cheque (Lei 7.357/85) é ordem de pagamento à vista dada pelo emitente contra o banco sacado, onde mantém fundos disponíveis."
+    },
+    {
+      id: "q6",
+      topic: "Direito Empresarial Geral",
+      q: "A emissão da duplicata mercantil está necessariamente vinculada a:",
+      options: [
+        "Um contrato de mútuo bancário",
+        "Uma compra e venda mercantil ou prestação de serviços",
+        "A constituição de uma sociedade empresária",
+        "Uma doação entre empresários"
+      ],
+      correct: 1,
+      exp: "A duplicata (Lei 5.474/68) é título causal: só pode ser emitida com base em fatura de compra e venda mercantil ou de prestação de serviços."
+    },
+    {
+      id: "q7",
+      topic: "Direito Empresarial Geral",
+      q: "Conforme a Lei 11.101/2005, a recuperação judicial tem por objetivo principal:",
+      options: [
+        "Liquidar de imediato todo o patrimônio do devedor",
+        "Viabilizar a superação da crise econômico-financeira, preservando a fonte produtora, o emprego e os interesses dos credores",
+        "Extinguir a empresa e transferir os sócios para outra sociedade",
+        "Converter automaticamente a empresa em sociedade anônima"
+      ],
+      correct: 1,
+      exp: "Art. 47 da Lei 11.101/2005: a recuperação judicial busca viabilizar a superação da crise, preservando a empresa, sua função social e o estímulo à atividade econômica."
+    },
+    {
+      id: "q8",
+      topic: "Direito Empresarial Geral",
+      q: "Sobre o nome empresarial, é correto afirmar que ele pode adotar a forma de:",
+      options: [
+        "Apenas firma, em qualquer tipo societário",
+        "Apenas denominação, em qualquer tipo societário",
+        "Firma ou denominação, a depender do tipo societário adotado",
+        "Nenhuma das anteriores, pois empresário não tem nome"
+      ],
+      correct: 2,
+      exp: "O Código Civil admite firma (razão social) ou denominação, conforme o tipo societário — por exemplo, a S.A. usa denominação, enquanto sociedades de pessoas costumam usar firma."
+    },
+    {
+      id: "q9",
+      topic: "Direito Empresarial Geral",
+      q: "O estabelecimento empresarial (art. 1.142, CC) é definido como:",
+      options: [
+        "Sinônimo de sociedade empresária",
+        "O complexo de bens organizado para o exercício da empresa",
+        "Apenas o imóvel onde a empresa funciona",
+        "O patrimônio pessoal do empresário, distinto da atividade"
+      ],
+      correct: 1,
+      exp: "O estabelecimento (antigo 'fundo de comércio') é o conjunto organizado de bens materiais e imateriais usado no exercício da atividade empresarial."
+    },
+    {
+      id: "q10",
+      topic: "Direito Empresarial Geral",
+      q: "No contrato de franquia empresarial, o franqueador, em regra:",
+      options: [
+        "Vende integralmente seu negócio ao franqueado, extinguindo o vínculo entre as partes",
+        "Cede o direito de uso de marca e know-how mediante remuneração, mantendo padrões, supervisão e assistência",
+        "Assume diretamente a administração de todas as unidades franqueadas",
+        "Está proibido de cobrar royalties do franqueado"
+      ],
+      correct: 1,
+      exp: "Lei 13.966/2019: a franquia envolve cessão do direito de uso de marca/know-how, com o franqueador mantendo padrões de qualidade e prestando assistência ao franqueado."
+    },
+    {
+      id: "q11",
+      topic: "Direito Empresarial Geral",
+      q: "A recuperação extrajudicial se diferencia da judicial principalmente porque:",
+      options: [
+        "É apenas homologada em juízo após negociação prévia com credores, com menor grau de intervenção judicial",
+        "Dispensa qualquer aprovação de credores",
+        "É concedida automaticamente, sem qualquer processo formal",
+        "Só pode ser utilizada por sociedades anônimas de capital aberto"
+      ],
+      correct: 0,
+      exp: "Na recuperação extrajudicial, o plano é negociado diretamente com os credores e depois levado para homologação judicial, com participação do Judiciário mais restrita do que na recuperação judicial."
+    },
+    {
+      id: "q12",
+      topic: "Direito Empresarial Geral",
+      q: "A desconsideração da personalidade jurídica (art. 50, CC) pode ser aplicada quando houver:",
+      options: [
+        "Qualquer dívida da sociedade, independentemente de fraude ou abuso",
+        "Abuso da personalidade jurídica, caracterizado por desvio de finalidade ou confusão patrimonial",
+        "Apenas quando decretada a falência da sociedade",
+        "Exclusivamente contra sociedades limitadas"
+      ],
+      correct: 1,
+      exp: "O art. 50 do CC exige abuso da personalidade jurídica — desvio de finalidade ou confusão patrimonial — para autorizar a desconsideração."
+    },
+    {
+      id: "q13",
+      topic: "Direito Empresarial Geral",
+      q: "O registro do empresário e da sociedade empresária deve ser feito perante:",
+      options: [
+        "O Cartório de Registro Civil de Pessoas Naturais",
+        "A Junta Comercial, órgão do Registro Público de Empresas Mercantis",
+        "O Cartório de Notas do domicílio do sócio majoritário",
+        "Exclusivamente a Receita Federal"
+      ],
+      correct: 1,
+      exp: "Lei 8.934/94: empresários e sociedades empresárias registram seus atos constitutivos na Junta Comercial de seu Estado."
+    },
+    {
+      id: "q14",
+      topic: "Direito Empresarial Geral",
+      q: "Sobre a nota promissória, é correto afirmar que:",
+      options: [
+        "É uma ordem de pagamento dada por um sacador contra um sacado",
+        "É uma promessa de pagamento feita pelo próprio emitente (promitente) diretamente ao beneficiário",
+        "Só pode ser emitida por instituições financeiras",
+        "Não é considerada título de crédito pela legislação brasileira"
+      ],
+      correct: 1,
+      exp: "Diferente do cheque e da letra de câmbio (ordens de pagamento), a nota promissória é uma promessa: o próprio emitente se compromete a pagar ao beneficiário."
+    },
+
+    /* ---------- RECUPERAÇÃO JUDICIAL ---------- */
+    {
+      id: "q15",
+      topic: "Recuperação Judicial",
+      q: "Além do próprio empresário ou sociedade empresária em crise, a Lei 11.101/2005 também legitima a requerer a recuperação judicial:",
+      options: [
+        "Qualquer credor titular de crédito quirografário",
+        "O cônjuge sobrevivente, os herdeiros do devedor, o inventariante e o sócio remanescente",
+        "Apenas o administrador judicial já nomeado em processo anterior",
+        "O Ministério Público, de ofício"
+      ],
+      correct: 1,
+      exp: "Art. 48, caput, e art. 53, §1º, da Lei 11.101/05: além do empresário/sociedade em crise, podem requerer a recuperação judicial o cônjuge sobrevivente, os herdeiros, o inventariante e o sócio remanescente."
+    },
+    {
+      id: "q16",
+      topic: "Recuperação Judicial",
+      q: "Nos termos do art. 3º da Lei 11.101/2005, é competente para a recuperação judicial e a falência o juízo:",
+      options: [
+        "Do domicílio pessoal do sócio majoritário",
+        "Do local de registro do CNPJ, ainda que ali não haja qualquer atividade",
+        "Do principal estabelecimento do devedor, entendido como aquele onde está centralizado o maior volume de negócios ou o centro decisório, mesmo que fixado de outra forma consensual ou contratual",
+        "Do foro eleito livremente pelo devedor em contrato, independentemente de onde a empresa efetivamente opera"
+      ],
+      correct: 2,
+      exp: "Art. 3º da Lei 11.101/05: competente é o juízo do principal estabelecimento do devedor — aquele onde se concentra o maior volume de negócios ou o centro decisório, ainda que estabelecido de outra forma consensual ou contratualmente."
+    },
+    {
+      id: "q17",
+      topic: "Recuperação Judicial",
+      q: "Deferido o processamento da recuperação judicial, as execuções contra o devedor ficam suspensas (stay period) pelo prazo de:",
+      options: [
+        "60 dias, improrrogáveis",
+        "90 dias, prorrogáveis indefinidamente",
+        "180 dias, prorrogáveis por igual período, uma única vez e em caráter excepcional, desde que o devedor não tenha concorrido para a superação do prazo",
+        "360 dias, sem qualquer possibilidade de prorrogação"
+      ],
+      correct: 2,
+      exp: "Art. 6º da Lei 11.101/05: a suspensão das execuções dura 180 dias contados do deferimento do processamento, prorrogáveis uma única vez, em caráter excepcional, se o devedor não houver concorrido para a superação do prazo."
+    },
+    {
+      id: "q18",
+      topic: "Recuperação Judicial",
+      q: "O plano de recuperação judicial deve ser apresentado pelo devedor em juízo no prazo de:",
+      options: [
+        "30 dias, prorrogáveis a critério do juiz",
+        "45 dias, improrrogáveis",
+        "60 dias, improrrogáveis, sob pena de convolação em falência",
+        "90 dias, mediante autorização do administrador judicial"
+      ],
+      correct: 2,
+      exp: "Art. 53, caput, da Lei 11.101/05: o plano deve ser apresentado no prazo improrrogável de 60 dias da publicação da decisão que defere o processamento, sob pena de convolação em falência."
+    },
+    {
+      id: "q19",
+      topic: "Recuperação Judicial",
+      q: "Quanto aos créditos derivados da legislação do trabalho ou de acidente de trabalho vencidos até o pedido, o plano de recuperação judicial não pode prever prazo de pagamento superior a:",
+      options: [
+        "6 meses",
+        "1 ano",
+        "2 anos",
+        "30 dias"
+      ],
+      correct: 1,
+      exp: "Art. 54, caput, da Lei 11.101/05: o plano não pode prever prazo superior a 1 ano para pagamento dos créditos trabalhistas ou de acidente de trabalho vencidos até o pedido."
+    },
+    {
+      id: "q20",
+      topic: "Recuperação Judicial",
+      q: "Já os créditos de natureza estritamente salarial vencidos nos 3 meses anteriores ao pedido de recuperação judicial, até o limite de 5 salários-mínimos por trabalhador, devem ser pagos em prazo não superior a:",
+      options: [
+        "15 dias",
+        "30 dias",
+        "60 dias, sem limite de valor",
+        "90 dias, limitado a 10 salários-mínimos"
+      ],
+      correct: 1,
+      exp: "Art. 54, §1º, da Lei 11.101/05: prazo máximo de 30 dias para pagamento dos créditos estritamente salariais vencidos nos 3 meses anteriores ao pedido, até o limite de 5 salários-mínimos por trabalhador."
+    },
+    {
+      id: "q21",
+      topic: "Recuperação Judicial",
+      q: "O rol de meios de recuperação judicial previsto no art. 50 da Lei 11.101/2005 (concessão de prazos, cisão, aumento de capital, trespasse, conversão de dívida em capital social, entre outros) é:",
+      options: [
+        "Taxativo, não admitindo qualquer outro meio além dos listados",
+        "Exemplificativo, podendo o plano prever outros meios de recuperação não elencados no artigo",
+        "Aplicável apenas a sociedades anônimas de capital aberto",
+        "Condicionado à aprovação prévia do Ministério Público para qualquer meio adotado"
+      ],
+      correct: 1,
+      exp: "O art. 50 traz um rol exemplificativo de meios de recuperação judicial — o plano pode se valer de outros meios não listados, respeitada a legislação pertinente a cada caso."
+    },
+    {
+      id: "q22",
+      topic: "Recuperação Judicial",
+      q: "Segundo o entendimento do STJ, o plano de recuperação judicial aprovado pela assembleia-geral de credores possui índole predominantemente contratual, de modo que:",
+      options: [
+        "O juiz pode alterar livremente as cláusulas econômicas se discordar dos termos negociados",
+        "É vedado ao magistrado se imiscuir nas especificidades do conteúdo econômico aprovado entre devedor e credores, respeitados os quóruns legais, ainda que as deliberações permaneçam sujeitas a controle de legalidade",
+        "O juiz deve necessariamente rejeitar qualquer plano que preveja deságio de créditos",
+        "A homologação judicial é sempre discricionária, independentemente da vontade dos credores"
+      ],
+      correct: 1,
+      exp: "STJ, AgInt no AREsp 1.325.791/RJ: o plano aprovado tem índole contratual, sendo vedado ao juiz se imiscuir no conteúdo econômico pactuado — mas as deliberações continuam sujeitas aos requisitos de validade dos atos jurídicos, controláveis judicialmente."
+    },
+    {
+      id: "q23",
+      topic: "Recuperação Judicial",
+      q: "Nos termos do art. 41 da Lei 11.101/2005, a assembleia-geral de credores é composta pelas seguintes classes:",
+      options: [
+        "Apenas credores trabalhistas e credores quirografários",
+        "Titulares de créditos trabalhistas/acidentários; titulares de créditos com garantia real; titulares de créditos quirografários, com privilégio especial, geral ou subordinados; e titulares de créditos enquadrados como ME ou EPP",
+        "Apenas titulares de créditos com garantia real e credores fiscais",
+        "Sócios e credores, sem qualquer distinção de classes"
+      ],
+      correct: 1,
+      exp: "Art. 41 da Lei 11.101/05: são quatro as classes — créditos trabalhistas/acidentários (I), garantia real (II), quirografários/privilegiados/subordinados (III) e créditos de ME/EPP (IV)."
+    },
+    {
+      id: "q24",
+      topic: "Recuperação Judicial",
+      q: "A aprovação forçada do plano de recuperação judicial pela via do 'cram down' exige, cumulativamente:",
+      options: [
+        "Voto favorável de credores que representem mais da metade do valor de todos os créditos presentes, independentemente de classe; aprovação de duas das classes votantes (ou de ao menos uma, se houver só duas com credores votantes); e, na classe que rejeitou o plano, voto favorável de mais de 1/3 dos credores",
+        "Unanimidade em todas as classes de credores",
+        "Aprovação exclusiva da classe de credores trabalhistas",
+        "Rejeição do plano por todas as classes, desde que o juiz entenda o plano economicamente viável"
+      ],
+      correct: 0,
+      exp: "O juiz pode conceder a recuperação mesmo sem aprovação plena da assembleia se, cumulativamente: (a) houver voto favorável de mais da metade do valor de todos os créditos presentes; (b) duas classes aprovarem (ou uma, havendo só duas votantes); e (c) na classe dissidente, mais de 1/3 tenha votado a favor."
+    },
+    {
+      id: "q25",
+      topic: "Recuperação Judicial",
+      q: "Da decisão que concede a recuperação judicial cabe:",
+      options: [
+        "Apelação, com efeito suspensivo",
+        "Agravo de instrumento, que pode ser interposto por qualquer credor ou pelo representante do Ministério Público",
+        "Mandado de segurança, exclusivo do devedor",
+        "Nenhum recurso, por se tratar de decisão irrecorrível"
+      ],
+      correct: 1,
+      exp: "Da decisão que concede a recuperação judicial cabe agravo de instrumento, que pode ser interposto por qualquer credor ou pelo representante do Ministério Público."
+    },
+    {
+      id: "q26",
+      topic: "Recuperação Judicial",
+      q: "São hipóteses de convolação da recuperação judicial em falência, conforme o art. 73 da Lei 11.101/2005:",
+      options: [
+        "Apenas a não apresentação do plano no prazo do art. 53",
+        "Deliberação da assembleia-geral de credores; não apresentação do plano no prazo legal; descumprimento de obrigação assumida no plano; e esvaziamento patrimonial que implique liquidação substancial da empresa em prejuízo dos credores não sujeitos à recuperação",
+        "Exclusivamente o não pagamento dos honorários do administrador judicial",
+        "Qualquer atraso superior a 5 dias no cumprimento de obrigação prevista no plano"
+      ],
+      correct: 1,
+      exp: "Art. 73 da Lei 11.101/05 traz seis hipóteses de convolação em falência, entre elas deliberação assemblear, não apresentação do plano, descumprimento de obrigação assumida e esvaziamento patrimonial da devedora."
+    },
+    {
+      id: "q27",
+      topic: "Recuperação Judicial",
+      q: "O encerramento da recuperação judicial, previsto no art. 63 da Lei 11.101/2005, ocorre quando:",
+      options: [
+        "Decorridos 6 meses da concessão, independentemente do cumprimento de qualquer obrigação",
+        "Cumpridas as obrigações vencidas no prazo de 2 anos de supervisão judicial (art. 61), hipótese em que o juiz decreta por sentença o encerramento",
+        "A critério exclusivo do administrador judicial, sem necessidade de sentença",
+        "Automaticamente, sem qualquer decisão judicial"
+      ],
+      correct: 1,
+      exp: "Art. 63 da Lei 11.101/05: cumpridas as obrigações vencidas no prazo do art. 61 (2 anos de fiscalização judicial), o juiz decreta por sentença o encerramento da recuperação judicial."
+    },
+
+    /* ---------- RECUPERAÇÃO ESPECIAL ---------- */
+    {
+      id: "q28",
+      topic: "Recuperação Especial",
+      q: "A recuperação judicial especial, prevista no art. 70 e seguintes da Lei 11.101/2005, destina-se, em regra, a:",
+      options: [
+        "Qualquer empresário, independentemente do porte da empresa",
+        "Microempresas e empresas de pequeno porte, conforme os critérios da LC 123/2006 (c/c LC 155/2016), e ao produtor rural cujo valor da causa não exceda o teto legal",
+        "Exclusivamente sociedades anônimas de capital aberto",
+        "Instituições financeiras em liquidação extrajudicial"
+      ],
+      correct: 1,
+      exp: "A recuperação especial é voltada a microempresas e empresas de pequeno porte (critérios da LC 123/2006 c/c LC 155/2016) e, também, ao produtor rural, desde que o valor da causa não exceda R$ 4.800.000,00."
+    },
+    {
+      id: "q29",
+      topic: "Recuperação Especial",
+      q: "O plano de recuperação especial de microempresas e empresas de pequeno porte deve prever, entre outras condições:",
+      options: [
+        "Parcelamento em até 60 parcelas mensais, corrigidas pela taxa CDI",
+        "Parcelamento em até 36 parcelas mensais, iguais e sucessivas, corrigidas monetariamente e com juros equivalentes à SELIC, com pagamento da primeira parcela em até 180 dias da distribuição do pedido",
+        "Pagamento à vista obrigatório em até 90 dias",
+        "Parcelamento sem qualquer correção monetária ou incidência de juros"
+      ],
+      correct: 1,
+      exp: "Art. 72, caput e alíneas, da Lei 11.101/05: parcelamento em até 36 parcelas mensais corrigidas pela SELIC, com a primeira parcela paga em até 180 dias da distribuição do pedido."
+    },
+    {
+      id: "q30",
+      topic: "Recuperação Especial",
+      q: "Durante a recuperação especial, para que o devedor aumente despesas ou contrate empregados, a Lei exige:",
+      options: [
+        "Apenas a comunicação ao Ministério Público",
+        "Autorização do juiz, ouvidos o administrador judicial e o comitê de credores",
+        "Aprovação prévia da assembleia-geral de credores",
+        "Nenhuma formalidade, bastando decisão do próprio devedor"
+      ],
+      correct: 1,
+      exp: "Art. 72, alínea 'd', da Lei 11.101/05: o plano estabelecerá a necessidade de autorização do juiz, ouvidos o administrador judicial e o comitê de credores, para o devedor aumentar despesas ou contratar empregados."
+    },
+    {
+      id: "q31",
+      topic: "Recuperação Especial",
+      q: "Sobre a convocação de assembleia-geral de credores na recuperação especial, é correto afirmar que:",
+      options: [
+        "É sempre obrigatória, sob pena de nulidade do plano",
+        "O juiz poderá autorizar a recuperação especial sem a convocação de assembleia-geral",
+        "Somente pode ser dispensada mediante anuência unânime de todos os credores",
+        "É expressamente vedada pela Lei 11.101/2005"
+      ],
+      correct: 1,
+      exp: "No plano especial, o juiz poderá autorizar a recuperação sem a convocação de assembleia-geral, dada a natureza mais simplificada do procedimento voltado a ME e EPP."
+    },
+
+    /* ---------- RECUPERAÇÃO EXTRAJUDICIAL ---------- */
+    {
+      id: "q32",
+      topic: "Recuperação Extrajudicial",
+      q: "São requisitos para que o devedor requeira a recuperação extrajudicial, nos termos do art. 48 da Lei 11.101/2005:",
+      options: [
+        "Regularidade da atividade, exercício regular há mais de 2 anos, não ser falido (ou ter suas obrigações extintas por sentença) e não ter sido condenado, nem ter administrador ou sócio controlador condenado, por crime que impeça a administração de empresa",
+        "Exercício da atividade há pelo menos 5 anos e capital social mínimo definido em lei",
+        "Ser exclusivamente sociedade limitada",
+        "Ausência de qualquer dívida tributária em aberto"
+      ],
+      correct: 0,
+      exp: "Art. 48 da Lei 11.101/05: regularidade, exercício regular da atividade há mais de 2 anos, não ser falido (ou já ter suas obrigações declaradas extintas) e não ter condenação por crime que impeça a administração de empresas."
+    },
+    {
+      id: "q33",
+      topic: "Recuperação Extrajudicial",
+      q: "Na negociação da recuperação extrajudicial, limitada pelo princípio da par conditio creditorum, o devedor não pode:",
+      options: [
+        "Negociar livremente com credores quirografários em geral",
+        "Dispor sobre créditos de natureza tributária, trabalhista ou decorrentes de acidente de trabalho, nem prever pagamento antecipado de dívidas ou tratamento desfavorável a credores não sujeitos ao plano",
+        "Negociar créditos com garantia real, desde que haja anuência do devedor",
+        "Incluir qualquer crédito no plano, desde que este seja homologado judicialmente"
+      ],
+      correct: 1,
+      exp: "Art. 161, §§1º e 2º, da Lei 11.101/05: a negociação não pode dispor sobre créditos tributários, trabalhistas e de acidente de trabalho, nem prever pagamento antecipado de dívidas ou tratamento desfavorável aos credores não sujeitos ao plano."
+    },
+    {
+      id: "q34",
+      topic: "Recuperação Extrajudicial",
+      q: "Qual a principal diferença entre o plano individualizado (art. 162) e o plano por classe de credores (art. 163) na recuperação extrajudicial?",
+      options: [
+        "O plano individualizado obriga automaticamente todos os credores da mesma classe, mesmo os que não assinaram",
+        "O plano por classe exige assinatura de credores que representem mais da metade dos créditos de uma ou mais classes, obrigando a totalidade dos credores daquela espécie; já o individualizado restringe-se aos credores que efetivamente aderiram",
+        "Ambos exigem homologação judicial obrigatória e produzem exatamente os mesmos efeitos",
+        "O plano por classe nunca pode alcançar credores dissidentes"
+      ],
+      correct: 1,
+      exp: "No plano por classe (art. 163), a assinatura de credores que representem mais da metade dos créditos de uma ou mais classes obriga a totalidade dos credores da espécie; no plano individualizado (art. 162), a negociação e os efeitos ficam restritos aos credores que aderiram."
+    },
+    {
+      id: "q35",
+      topic: "Recuperação Extrajudicial",
+      q: "O pedido de homologação do plano de recuperação extrajudicial:",
+      options: [
+        "Acarreta a suspensão de todas as ações e execuções contra o devedor, à semelhança da recuperação judicial",
+        "Não acarreta suspensão de direitos, ações ou execuções, nem impede o pedido de decretação de falência pelos credores não sujeitos ao plano",
+        "Suspende automaticamente a exigibilidade de todos os créditos tributários do devedor",
+        "Extingue todas as garantias reais constituídas anteriormente ao pedido"
+      ],
+      correct: 1,
+      exp: "Art. 161, §4º, da Lei 11.101/05: o pedido de homologação não acarreta suspensão de direitos, ações ou execuções, nem a impossibilidade de pedido de falência pelos credores não sujeitos ao plano."
+    },
+    {
+      id: "q36",
+      topic: "Recuperação Extrajudicial",
+      q: "Após a publicação do edital convocando os credores, o prazo para impugnação do plano de recuperação extrajudicial é de:",
+      options: [
+        "15 dias",
+        "30 dias, contados da publicação do edital, devendo o credor juntar prova de seu crédito",
+        "60 dias",
+        "90 dias"
+      ],
+      correct: 1,
+      exp: "Art. 164, §2º (c/c art. 64, §2º), da Lei 11.101/05: os credores têm 30 dias, contados da publicação do edital, para impugnar o plano, juntando prova de seu crédito."
+    },
+    {
+      id: "q37",
+      topic: "Recuperação Extrajudicial",
+      q: "Da sentença que homologa ou julga improcedente o pedido de recuperação extrajudicial cabe:",
+      options: [
+        "Agravo de instrumento, com efeito suspensivo",
+        "Apelação, sem efeito suspensivo",
+        "Embargos infringentes, exclusivamente",
+        "Nenhum recurso, por ser decisão irrecorrível"
+      ],
+      correct: 1,
+      exp: "Art. 164, §8º, da Lei 11.101/05: da sentença que homologar ou julgar improcedente o pedido cabe apelação, sem efeito suspensivo."
+    },
+    {
+      id: "q38",
+      topic: "Recuperação Extrajudicial",
+      q: "Uma vez homologado judicialmente, o plano de recuperação extrajudicial:",
+      options: [
+        "Só produz efeitos após o trânsito em julgado da sentença homologatória",
+        "Passa a constituir título executivo judicial e gera efeitos imediatos, independentemente da interposição de recursos",
+        "Somente produz efeitos após o decurso de 2 anos de supervisão judicial",
+        "Depende de nova assembleia-geral para produzir efeitos"
+      ],
+      correct: 1,
+      exp: "Arts. 161, §6º, e 165, da Lei 11.101/05: o plano homologado constitui título executivo judicial e gera efeitos imediatos, independentemente da interposição de recursos (art. 164, §7º)."
+    },
+
+    /* ---------- TEORIA DA EMPRESA ---------- */
+    {
+      id: "q39",
+      topic: "Teoria da Empresa",
+      q: "São requisitos do elemento 'profissionalismo', na caracterização do empresário:",
+      options: [
+        "Habitualidade, pessoalidade e monopólio de informações",
+        "Capital, mão de obra e tecnologia",
+        "Registro na Junta Comercial e emissão de notas fiscais",
+        "Finalidade lucrativa e affectio societatis"
+      ],
+      correct: 0,
+      exp: "O profissionalismo, um dos elementos do conceito de empresário (art. 966, CC), pressupõe habitualidade no exercício da atividade, pessoalidade (o empresário atua em nome próprio) e monopólio das informações sobre o produto ou serviço perante o consumidor."
+    },
+    {
+      id: "q40",
+      topic: "Teoria da Empresa",
+      q: "São considerados os 4 fatores de produção que caracterizam a organização da atividade empresarial:",
+      options: [
+        "Capital, mão de obra, insumos e tecnologia",
+        "Sócios, administradores, credores e consumidores",
+        "Ativo, passivo, patrimônio líquido e faturamento",
+        "Registro, contrato social, CNPJ e alvará"
+      ],
+      correct: 0,
+      exp: "A organização da atividade empresarial pressupõe a articulação dos quatro fatores de produção: capital, mão de obra, insumos e tecnologia."
+    },
+    {
+      id: "q41",
+      topic: "Teoria da Empresa",
+      q: "São hipóteses de atividades econômicas civis (que não se submetem ao regime empresarial), EXCETO:",
+      options: [
+        "Quem não se enquadra no conceito do art. 966 do Código Civil",
+        "Profissionais intelectuais, salvo se constituírem elemento de empresa",
+        "Empresário rural não registrado na Junta Comercial",
+        "Sociedade limitada regularmente registrada, ainda que de pequeno porte"
+      ],
+      correct: 3,
+      exp: "As quatro hipóteses de atividades econômicas civis são: quem não se enquadra no art. 966, profissionais intelectuais (regra), empresário rural não registrado e cooperativas. Uma sociedade limitada regularmente registrada é sociedade empresária, não atividade civil."
+    },
+    {
+      id: "q42",
+      topic: "Teoria da Empresa",
+      q: "O profissional intelectual (científico, literário ou artístico) que exerce sua profissão, ainda que com o concurso de auxiliares, é considerado empresário quando:",
+      options: [
+        "Nunca é considerado empresário, em nenhuma hipótese",
+        "O exercício da profissão constituir elemento de empresa, isto é, quando o profissional perde sua individualidade dentro da organização empresarial",
+        "Registrar-se voluntariamente na Junta Comercial, ainda que continue atuando sozinho",
+        "Emitir mais de 12 notas fiscais por ano"
+      ],
+      correct: 1,
+      exp: "Art. 966, parágrafo único, do CC: o profissional intelectual não é empresário, salvo se o exercício da profissão constituir elemento de empresa — quando sua atuação pessoal se dilui na organização empresarial que passa a explorar a atividade."
+    },
+    {
+      id: "q43",
+      topic: "Teoria da Empresa",
+      q: "Quanto às sociedades, é correto afirmar, segundo o art. 982 do Código Civil, que:",
+      options: [
+        "A sociedade por ações é sempre considerada empresária, independentemente de seu objeto, e a cooperativa é sempre considerada simples, independentemente de seu objeto",
+        "Toda sociedade que exerce atividade rural é obrigatoriamente empresária",
+        "A cooperativa é sempre considerada empresária, por explorar atividade econômica organizada",
+        "A sociedade por ações pode optar livremente por ser simples ou empresária"
+      ],
+      correct: 0,
+      exp: "Art. 982, parágrafo único, do CC: independentemente do objeto, é sempre empresária a sociedade por ações, e sempre simples a cooperativa."
+    },
+    {
+      id: "q44",
+      topic: "Teoria da Empresa",
+      q: "Sobre a distinção entre empresário individual e sócio de sociedade empresária, é correto afirmar que:",
+      options: [
+        "Os sócios de uma sociedade empresária também são, individualmente, empresários",
+        "Os sócios de uma sociedade empresária não são empresários — serão empreendedores ou investidores —, e as regras aplicáveis ao empresário individual não se estendem a eles",
+        "Só existe empresário individual quando a atividade é exercida sem registro",
+        "O empresário individual é sempre sócio de alguma sociedade limitada"
+      ],
+      correct: 1,
+      exp: "Quem exerce a empresa em nome próprio, como pessoa física, é o empresário individual; os sócios de uma sociedade empresária não são empresários (a própria sociedade é que explora a empresa), e sim empreendedores ou investidores, não se lhes aplicando as regras do empresário individual."
+    },
+    {
+      id: "q45",
+      topic: "Teoria da Empresa",
+      q: "Constituem hipóteses de falta de capacidade civil que impedem, em regra, o exercício da empresa como empresário individual:",
+      options: [
+        "Falidos não reabilitados e leiloeiros",
+        "Menores de 18 anos não emancipados, ébrios habituais, viciados em tóxicos, pródigos e aqueles que não podem exprimir vontade",
+        "Advogados e servidores públicos em geral",
+        "Estrangeiros não residentes no Brasil"
+      ],
+      correct: 1,
+      exp: "A falta de capacidade civil protege o próprio incapaz e alcança, entre outros, os menores não emancipados, ébrios habituais, viciados em tóxicos, pródigos e quem não pode exprimir vontade — casos em que, excepcionalmente, a empresa pode ser continuada por meio de representante ou assistente, mediante autorização judicial."
+    },
+    {
+      id: "q46",
+      topic: "Teoria da Empresa",
+      q: "Diferentemente da incapacidade civil, a proibição ao exercício de empresa (ex.: falido não reabilitado, condenado por crime que vede o acesso à atividade empresarial, leiloeiro):",
+      options: [
+        "Também protege o próprio proibido, que é civilmente incapaz",
+        "Recai sobre pessoas plenamente capazes para os atos da vida civil, mas que a lei impede de exercer a atividade empresarial, em proteção a terceiros",
+        "Só pode ser aplicada por decisão da Junta Comercial",
+        "É sempre temporária e cessa automaticamente após 1 ano"
+      ],
+      correct: 1,
+      exp: "Os proibidos de exercer empresa são plenamente capazes para os atos e negócios jurídicos em geral; a vedação legal ao exercício da atividade empresarial visa proteger terceiros, e não o próprio proibido."
+    },
+    {
+      id: "q47",
+      topic: "Teoria da Empresa",
+      q: "O nome empresarial não se confunde com:",
+      options: [
+        "A firma social, que é uma de suas espécies",
+        "A marca, o nome de domínio e o título do estabelecimento",
+        "A denominação social, que é sua outra espécie",
+        "O próprio empresário, do qual é elemento do patrimônio"
+      ],
+      correct: 1,
+      exp: "O nome empresarial (com o qual o empresário se apresenta nas relações econômicas) é distinto da marca (identifica produtos/serviços), do nome de domínio (endereço na internet) e do título do estabelecimento (identifica o local físico)."
+    },
+    {
+      id: "q48",
+      topic: "Teoria da Empresa",
+      q: "Sobre firma e denominação como espécies de nome empresarial, é correto afirmar que:",
+      options: [
+        "A firma, além de identificar o empresário, também serve como sua assinatura; a denominação é exclusivamente elemento de identificação, sem outra função",
+        "Firma e denominação são sinônimos, sem qualquer distinção prática",
+        "Apenas sociedades anônimas podem adotar firma",
+        "A denominação sempre exige o nome civil de um dos sócios"
+      ],
+      correct: 0,
+      exp: "A firma funciona também como assinatura do empresário nos contratos sociais; a denominação, por sua vez, é exclusivamente elemento de identificação do exercente da atividade empresarial, sem função de assinatura."
+    },
+    {
+      id: "q49",
+      topic: "Teoria da Empresa",
+      q: "Sobre a formação do nome empresarial conforme o tipo societário, é correto afirmar que:",
+      options: [
+        "A sociedade anônima só pode adotar firma, nunca denominação",
+        "A sociedade em conta de participação é proibida de adotar nome empresarial, e a sociedade limitada pode adotar firma ou denominação, sempre acompanhada da expressão 'limitada' ou 'Ltda.'",
+        "O empresário individual pode livremente escolher entre firma e denominação",
+        "A sociedade em nome coletivo só pode adotar denominação"
+      ],
+      correct: 1,
+      exp: "A sociedade em conta de participação é proibida de adotar nome empresarial (não tem personalidade jurídica própria perante terceiros); a limitada pode adotar firma ou denominação, mas sempre com a expressão 'limitada' ou 'Ltda.'. Já a S.A. só adota denominação, e o empresário individual só pode adotar firma."
+    },
+    {
+      id: "q50",
+      topic: "Teoria da Empresa",
+      q: "Segundo o princípio da veracidade, aplicável à formação do nome empresarial:",
+      options: [
+        "É proibido ao empresário valer-se, na composição de seu nome, de elementos estranhos ao seu nome civil (ou ao de seus sócios), regra que não se aplica integralmente à denominação da sociedade anônima",
+        "Qualquer expressão de fantasia pode ser livremente utilizada, independentemente do tipo societário",
+        "Aplica-se apenas às sociedades limitadas",
+        "Impede qualquer alteração do nome empresarial ao longo da existência da sociedade"
+      ],
+      correct: 0,
+      exp: "O princípio da veracidade veda o uso, na composição do nome empresarial, de elementos estranhos ao nome civil do empresário ou de seus sócios — mas não se aplica integralmente à denominação da sociedade anônima, que pode homenagear o nome de fundador ou de quem tenha concorrido para o êxito da empresa."
+    },
+    {
+      id: "q51",
+      topic: "Teoria da Empresa",
+      q: "O registro de empresa no Brasil é exercido, no âmbito federal, pelo Departamento de Registro Empresarial e Integração (DREI) e, no âmbito estadual, pelas Juntas Comerciais. A respeito do DREI, é correto afirmar que:",
+      options: [
+        "Realiza diretamente os atos de registro de cada empresa",
+        "Supervisiona e coordena a execução do registro de empresa, fixando diretrizes gerais para as Juntas Comerciais, sem realizar, ele próprio, atos de registro",
+        "É um órgão vinculado exclusivamente ao Poder Judiciário estadual",
+        "Substitui as Juntas Comerciais nos Estados que não as mantêm"
+      ],
+      correct: 1,
+      exp: "O DREI é órgão federal do sistema de registro de empresas em função executiva, mas não realiza, ele mesmo, atos de registro — compete-lhe fixar diretrizes gerais e supervisionar/orientar as Juntas Comerciais, órgãos estaduais que efetivamente executam o registro."
+    },
+    {
+      id: "q52",
+      topic: "Teoria da Empresa",
+      q: "São os três atos do registro de empresa executados pelas Juntas Comerciais:",
+      options: [
+        "Matrícula, arquivamento e autenticação",
+        "Inscrição, baixa e alteração",
+        "Protocolo, exame e homologação",
+        "Registro, averbação e cancelamento"
+      ],
+      correct: 0,
+      exp: "A matrícula é o ato de inscrição de tradutores públicos, intérpretes comerciais, leiloeiros, trapicheiros e administradores de armazéns-gerais; o arquivamento é o registro do empresário (pessoa física ou jurídica); e a autenticação está ligada aos livros comerciais."
+    },
+    {
+      id: "q53",
+      topic: "Teoria da Empresa",
+      q: "É considerada inativa a empresa que não realizar qualquer atividade operacional, patrimonial ou financeira durante todo o ano-calendário. Além disso, aquele que não proceder a qualquer arquivamento no período de:",
+      options: [
+        "1 ano deve comunicar a inatividade à Receita Federal",
+        "10 anos deve comunicar à Junta Comercial que ainda se encontra em atividade, sob pena de também ser considerado inativo, autorizando o cancelamento do registro",
+        "5 anos perde automaticamente a personalidade jurídica",
+        "2 anos deve requerer nova inscrição no CNPJ"
+      ],
+      correct: 1,
+      exp: "Quem não realiza qualquer arquivamento por 10 anos deve comunicar à Junta Comercial que permanece em atividade; a omissão também gera a presunção de inatividade, autorizando o cancelamento do registro e, por consequência, a dissolução irregular."
+    },
+    {
+      id: "q54",
+      topic: "Teoria da Empresa",
+      q: "O empresário que exerce sua atividade sem o devido registro na Junta Comercial (empresário irregular) sofre, entre outras, as seguintes restrições:",
+      options: [
+        "Nenhuma, pois o registro é meramente declaratório e não gera qualquer efeito prático",
+        "Falta de legitimidade ativa para requerer falência de seu devedor e para requerer recuperação judicial, impossibilidade de autenticar seus livros e responsabilidade solidária e ilimitada dos sócios",
+        "Apenas a impossibilidade de emitir notas fiscais",
+        "A automática dissolução da sociedade, independentemente de qualquer procedimento"
+      ],
+      correct: 1,
+      exp: "O registro não é condição para ser considerado empresário (art. 966, CC), mas sua ausência gera restrições relevantes: falta de legitimidade ativa para pedir falência de devedor (art. 97, §1º, LF) e para requerer recuperação judicial (art. 51, V, LF), impossibilidade de autenticação dos livros e responsabilidade solidária e ilimitada dos sócios."
+    },
+    {
+      id: "q55",
+      topic: "Teoria da Empresa",
+      q: "Segundo o princípio do sigilo dos livros empresariais (art. 1.190 do Código Civil):",
+      options: [
+        "Qualquer pessoa pode requerer, sem justificativa, a exibição integral dos livros de um empresário",
+        "Ressalvados os casos previstos em lei, nenhuma autoridade, juiz ou tribunal pode determinar diligência para verificar se o empresário observa, ou não, as formalidades legais em seus livros e fichas",
+        "Os livros empresariais são documentos de acesso público irrestrito",
+        "O sigilo se aplica apenas aos livros facultativos, nunca aos obrigatórios"
+      ],
+      correct: 1,
+      exp: "Art. 1.190 do CC consagra o princípio do sigilo: ressalvadas as exceções legais, nenhuma autoridade pode determinar diligência para fiscalizar se o empresário observa as formalidades legais em seus livros — a exibição judicial (parcial ou total) só ocorre nas hipóteses previstas em lei."
+    },
+    {
+      id: "q56",
+      topic: "Teoria da Empresa",
+      q: "Quanto à natureza jurídica do estabelecimento empresarial, a doutrina o classifica como:",
+      options: [
+        "Universalidade de direito, pois decorre diretamente de imposição legal",
+        "Universalidade de fato, pois resulta da vontade do empresário em reunir, organizadamente, bens materiais e imateriais com vistas a um fim, e não de imposição legal",
+        "Bem imóvel por natureza, equiparado ao imóvel onde a empresa funciona",
+        "Patrimônio autônomo com personalidade jurídica própria, distinta do empresário"
+      ],
+      correct: 1,
+      exp: "O estabelecimento é universalidade de fato: reúne, pela vontade do empresário, bens materiais e imateriais sistematicamente organizados com vistas ao exercício da empresa — diferente da universalidade de direito, que decorre de imposição legal (como a herança)."
+    },
+    {
+      id: "q57",
+      topic: "Teoria da Empresa",
+      q: "O 'aviamento', segundo parte da doutrina, refere-se ao valor agregado que o estabelecimento organizado possui além da soma de seus bens individuais, e não se confunde com:",
+      options: [
+        "A clientela, que é a massa de pessoas que efetivamente contrata com o empresário",
+        "O ponto empresarial",
+        "O fundo de comércio",
+        "A propriedade industrial"
+      ],
+      correct: 0,
+      exp: "Aviamento é o sobrevalor que a organização eficiente do estabelecimento agrega ao conjunto de bens; não se confunde com a clientela, que é o conjunto de pessoas que efetivamente se relacionam com o empresário — o aviamento é causa, a clientela é, entre outros, um de seus efeitos."
+    },
+    {
+      id: "q58",
+      topic: "Teoria da Empresa",
+      q: "Na alienação do estabelecimento empresarial (trespasse), quando não restam no patrimônio do alienante bens suficientes para solver o passivo, a anuência dos credores:",
+      options: [
+        "É sempre dispensável, bastando o registro do contrato na Junta Comercial",
+        "Deve ser colhida por escrito ou, alternativamente, os credores devem ser notificados — presumindo-se a anuência tácita caso permaneçam em silêncio por 30 dias após a notificação (art. 1.145, CC)",
+        "Só pode ser obtida por meio de ação judicial própria",
+        "Deve ser unânime e expressa, não se admitindo anuência tácita em nenhuma hipótese"
+      ],
+      correct: 1,
+      exp: "Art. 1.145 do CC: se não restarem bens suficientes para solver o passivo, a eficácia da alienação do estabelecimento depende do pagamento de todos os credores ou de seu consentimento (expresso ou tácito, presumido pelo silêncio de 30 dias após notificação)."
+    },
+    {
+      id: "q59",
+      topic: "Teoria da Empresa",
+      q: "Para que o locatário empresário tenha direito à ação renovatória de locação empresarial (proteção ao ponto), a Lei de Locações exige, entre outros requisitos:",
+      options: [
+        "Contrato de locação por tempo determinado de, no mínimo, 5 anos (admitida a soma de prazos de contratos sucessivamente renovados) e exploração do mesmo ramo de atividade pelo prazo mínimo e ininterrupto de 3 anos até a propositura da ação",
+        "Contrato por prazo indeterminado e exploração de qualquer ramo de atividade",
+        "Ser o locatário necessariamente sociedade anônima",
+        "Prévia autorização do locador para a propositura da ação"
+      ],
+      correct: 0,
+      exp: "Art. 51 da Lei 8.245/91: exige-se locatário empresário, contrato por tempo determinado de no mínimo 5 anos (podendo somar prazos de renovações sucessivas) e exploração do mesmo ramo de atividade por, no mínimo, 3 anos ininterruptos até a propositura da ação renovatória."
+    },
+    {
+      id: "q60",
+      topic: "Teoria da Empresa",
+      q: "São hipóteses de exceção de retomada, que autorizam o locador a resistir à renovação compulsória da locação empresarial, EXCETO:",
+      options: [
+        "Insuficiência da proposta de renovação apresentada pelo locatário",
+        "Proposta melhor de terceiro",
+        "Reforma substancial no prédio locado ou uso próprio pelo locador",
+        "Simples desejo do locador de aumentar o valor do aluguel, sem qualquer das demais hipóteses legais"
+      ],
+      correct: 3,
+      exp: "A Lei do Inquilinato prevê hipóteses taxativas de exceção de retomada (insuficiência da proposta, proposta melhor de terceiro, reforma substancial, uso próprio, transferência de estabelecimento para ascendente/descendente/cônjuge em ramo diverso); o mero interesse do locador em reajustar o aluguel, isoladamente, não afasta a renovação compulsória."
+    },
+    {
+      id: "q61",
+      topic: "Teoria da Empresa",
+      q: "São bens integrantes da propriedade industrial, protegidos pela Lei nº 9.279/96 e geridos pelo INPI:",
+      options: [
+        "Apenas a marca e a patente de invenção",
+        "A invenção, o modelo de utilidade, o desenho industrial e a marca — além das indicações geográficas, também registradas pelo INPI",
+        "Somente o software e os direitos autorais",
+        "O nome empresarial e o título do estabelecimento"
+      ],
+      correct: 1,
+      exp: "Art. 2º da Lei 9.279/96: a propriedade industrial protege a invenção, o modelo de utilidade, o desenho industrial e a marca; o INPI, autarquia federal, também é responsável pelo registro das indicações geográficas."
+    },
+    {
+      id: "q62",
+      topic: "Teoria da Empresa",
+      q: "Conforme o art. 122 da Lei 9.279/96, são suscetíveis de registro como marca:",
+      options: [
+        "Quaisquer sinais distintivos, incluindo olfativos, gustativos e sonoros",
+        "Apenas sinais distintivos visualmente perceptíveis, não compreendidos nas proibições legais — sendo vedado o registro de marcas olfativas, gustativas ou sonoras",
+        "Somente palavras, sendo vedado o registro de logotipos ou figuras",
+        "Apenas sinais tridimensionais"
+      ],
+      correct: 1,
+      exp: "Art. 122 da LPI: são registráveis como marca os sinais distintivos visualmente perceptíveis — por isso é vedado o registro de marcas olfativas, gustativas ou sonoras, já que a marca deve identificar produtos e serviços visualmente."
+    },
+    {
+      id: "q63",
+      topic: "Teoria da Empresa",
+      q: "Sobre a distinção entre marca coletiva e marca de certificação (art. 128, §§2º e 3º, da Lei 9.279/96):",
+      options: [
+        "Ambas têm sempre o mesmo titular: uma associação empresarial",
+        "Na marca coletiva, o titular é sempre uma associação (entidade sindical ou não) que congrega os empresários; na marca de certificação, o titular é um agente econômico que avalia e controla a produção de outros, sem poder ter interesse comercial direto no produto ou serviço certificado",
+        "A marca de certificação só pode ser registrada por órgãos públicos",
+        "A marca coletiva nunca pode ser registrada por sindicatos"
+      ],
+      correct: 1,
+      exp: "Na marca coletiva, o titular é uma associação que reúne empresários de determinado produto, região ou ideologia; na marca de certificação, o titular é um agente que avalia/controla a produção de terceiros, sem poder ter interesse comercial ou industrial direto no produto certificado."
+    }
+  ];
+
+  // banco de perguntas ativo (pode ser sobrescrito pelo professor)
+  var quizData = DEFAULT_QUESTIONS.slice();
+  var QUESTIONS_KEY = 'questions:bank';
+
+  var taunts = [
+    "Nada de consultar o ChatGPT aí, hein? 👀",
+    "Isso é feito individual, viu? Sem colinha.",
+    "Ainda pensando? O juiz já está de olho.",
+    "Essa tá difícil, né? Calma, respira e lê de novo.",
+    "Sem espiadinha no colega do lado, por favor.",
+    "O Google não vai te salvar dessa vez.",
+    "Tá suando frio? Normal. Isso é Direito Empresarial.",
+    "Psiu, nada de 'vaquinha' na lei seca escondida.",
+    "Faltam só alguns segundos... ou não.",
+    "Se fosse fácil, não caía na OAB.",
+    "Recesso forense não existe aqui, continue!",
+    "O relógio do fórum não perdoa ninguém."
+  ];
+
+  var TOTAL_TIME = 30;
+  var state = {};
+  var timerInterval = null;
+  var lastTauntIdx = -1;
+  var tauntTimeoutsFired = {};
+
+  var els = {
+    register: document.getElementById('screen-register'),
+    intro: document.getElementById('screen-intro'),
+    quiz: document.getElementById('screen-quiz'),
+    result: document.getElementById('screen-result'),
+    teacher: document.getElementById('screen-teacher'),
+    registerForm: document.getElementById('register-form'),
+    regName: document.getElementById('reg-name'),
+    regEmail: document.getElementById('reg-email'),
+    fieldName: document.getElementById('field-name'),
+    fieldEmail: document.getElementById('field-email'),
+    btnStart: document.getElementById('btn-start'),
+    btnNext: document.getElementById('btn-next'),
+    btnRestart: document.getElementById('btn-restart'),
+    qIndex: document.getElementById('q-index'),
+    qTotal: document.getElementById('q-total'),
+    scoreVal: document.getElementById('score-val'),
+    streakVal: document.getElementById('streak-val'),
+    livesBox: document.getElementById('lives-box'),
+    progressFill: document.getElementById('progress-fill'),
+    timerFill: document.getElementById('timer-fill'),
+    caseTag: document.getElementById('case-tag'),
+    questionText: document.getElementById('question-text'),
+    optionsBox: document.getElementById('options-box'),
+    explanation: document.getElementById('explanation'),
+    explanationText: document.getElementById('explanation-text'),
+    judge: document.getElementById('judge'),
+    taunt: document.getElementById('taunt'),
+    toast: document.getElementById('toast'),
+    resultEyebrow: document.getElementById('result-eyebrow'),
+    resultTitle: document.getElementById('result-title'),
+    resultRank: document.getElementById('result-rank'),
+    resultMsg: document.getElementById('result-msg'),
+    resultSaved: document.getElementById('result-saved'),
+    statCorrect: document.getElementById('stat-correct'),
+    statScore: document.getElementById('stat-score'),
+    statPct: document.getElementById('stat-pct'),
+    btnOpenTeacher: document.getElementById('btn-open-teacher'),
+    btnBackFromGate: document.getElementById('btn-back-from-gate'),
+    teacherGate: document.getElementById('teacher-gate'),
+    teacherDashboard: document.getElementById('teacher-dashboard'),
+    teacherPass: document.getElementById('teacher-pass'),
+    fieldTeacherPass: document.getElementById('field-teacher-pass'),
+    btnTeacherLogin: document.getElementById('btn-teacher-login'),
+    btnTeacherLogout: document.getElementById('btn-teacher-logout'),
+    btnRefresh: document.getElementById('btn-refresh'),
+    btnExport: document.getElementById('btn-export'),
+    teacherStats: document.getElementById('teacher-stats'),
+    teacherSearch: document.getElementById('teacher-search'),
+    rosterBody: document.getElementById('roster-body'),
+    rosterEmpty: document.getElementById('roster-empty'),
+
+    tabBtnNotas: document.getElementById('tab-btn-notas'),
+    tabBtnPerguntas: document.getElementById('tab-btn-perguntas'),
+    tabNotas: document.getElementById('tab-notas'),
+    tabPerguntas: document.getElementById('tab-perguntas'),
+    questionSearch: document.getElementById('question-search'),
+    btnNewQuestion: document.getElementById('btn-new-question'),
+    btnResetQuestions: document.getElementById('btn-reset-questions'),
+    questionCountHint: document.getElementById('question-count-hint'),
+    questionFormWrap: document.getElementById('question-form-wrap'),
+    qfId: document.getElementById('qf-id'),
+    qfTopic: document.getElementById('qf-topic'),
+    qfQuestion: document.getElementById('qf-question'),
+    qfOptions: document.getElementById('qf-options'),
+    qfExp: document.getElementById('qf-exp'),
+    qfErr: document.getElementById('qf-err'),
+    btnSaveQuestion: document.getElementById('btn-save-question'),
+    btnCancelQuestion: document.getElementById('btn-cancel-question'),
+    questionList: document.getElementById('question-list')
+  };
+
+  els.qTotal.textContent = quizData.length;
+
+  // ---------- banco de perguntas (carregado do painel do professor, se existir) ----------
+  function loadQuestionBank(){
+    if(!window.storage || !window.storage.get){
+      return Promise.resolve(DEFAULT_QUESTIONS.slice());
+    }
+    return window.storage.get(QUESTIONS_KEY, true).then(function(res){
+      try{
+        var list = JSON.parse(res.value);
+        if(Array.isArray(list) && list.length > 0) return list;
+      }catch(e){ /* ignora e cai no default */ }
+      return DEFAULT_QUESTIONS.slice();
+    }).catch(function(){
+      return DEFAULT_QUESTIONS.slice();
+    });
+  }
+
+  function saveQuestionBank(list){
+    if(!window.storage || !window.storage.set){
+      return Promise.resolve(null);
+    }
+    return window.storage.set(QUESTIONS_KEY, JSON.stringify(list), true);
+  }
+
+  var bankReady = loadQuestionBank().then(function(list){
+    quizData = list;
+    els.qTotal.textContent = quizData.length;
+    return quizData;
+  });
+
+  // ---------- identidade do aluno (nome + e-mail institucional) ----------
+  var student = { name: '', email: '' };
+
+  // Defina aqui um domínio institucional para exigir (ex.: '@unifenas.br').
+  // Deixe como '' para aceitar qualquer e-mail com formato válido.
+  var INSTITUTIONAL_DOMAIN = '';
+
+  function showScreen(name){
+    [els.register, els.intro, els.quiz, els.result, els.teacher].forEach(function(s){ s.classList.remove('active'); });
+    els[name].classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  function resetState(){
+    state = { index:0, score:0, streak:0, lives:3, correct:0, answered:false };
+  }
+
+  // ---------- audio (sem assets externos) ----------
+  var audioCtx = null;
+  function tone(freq, dur, type){
+    try{
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      var o = audioCtx.createOscillator();
+      var g = audioCtx.createGain();
+      o.type = type || 'sine';
+      o.frequency.value = freq;
+      g.gain.value = 0.06;
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + dur);
+      o.stop(audioCtx.currentTime + dur);
+    }catch(e){ /* silencioso se navegador bloquear */ }
+  }
+  function sfxCorrect(){ tone(660,0.12,'triangle'); setTimeout(function(){tone(880,0.16,'triangle');},110); }
+  function sfxWrong(){ tone(160,0.28,'sawtooth'); }
+  function sfxStamp(){ tone(90,0.09,'square'); }
+
+  // ---------- fluxo principal ----------
+  function startQuiz(){
+    resetState();
+    showScreen('quiz');
+    renderHud();
+    loadQuestion();
+  }
+
+  function renderHud(){
+    els.qIndex.textContent = state.index + 1;
+    els.scoreVal.textContent = state.score;
+    els.streakVal.textContent = state.streak;
+    els.progressFill.style.width = ((state.index)/quizData.length*100) + '%';
+    var hearts = els.livesBox.querySelectorAll('span');
+    hearts.forEach(function(h, i){
+      h.classList.toggle('lost', i >= state.lives);
+    });
+  }
+
+  function loadQuestion(){
+    if(state.index >= quizData.length){ endQuiz(true); return; }
+    state.answered = false;
+    var item = quizData[state.index];
+    els.caseTag.textContent = 'Matéria: ' + (item.topic || 'Direito Empresarial');
+    els.questionText.textContent = item.q;
+    els.optionsBox.innerHTML = '';
+    els.explanation.classList.remove('show');
+    els.btnNext.style.display = 'none';
+    var oldStamp = document.querySelector('.stamp');
+    if(oldStamp) oldStamp.remove();
+
+    var letters = ['A','B','C','D'];
+    item.options.forEach(function(optText, i){
+      var btn = document.createElement('button');
+      btn.className = 'option';
+      btn.innerHTML = '<span class="letter">'+letters[i]+'</span><span>'+optText+'</span>';
+      btn.addEventListener('click', function(){ selectAnswer(i); });
+      els.optionsBox.appendChild(btn);
+    });
+
+    renderHud();
+    startTimer();
+  }
+
+  function startTimer(){
+    clearInterval(timerInterval);
+    var timeLeft = TOTAL_TIME;
+    tauntTimeoutsFired = {};
+    updateTimerBar(timeLeft);
+    timerInterval = setInterval(function(){
+      timeLeft--;
+      updateTimerBar(timeLeft);
+      if(timeLeft === 17 && !tauntTimeoutsFired[17]){ tauntTimeoutsFired[17]=true; showTaunt(); }
+      if(timeLeft === 8 && !tauntTimeoutsFired[8]){ tauntTimeoutsFired[8]=true; showTaunt(); }
+      if(timeLeft <= 0){
+        clearInterval(timerInterval);
+        if(!state.answered) selectAnswer(-1);
+      }
+    }, 1000);
+  }
+
+  function updateTimerBar(t){
+    var pct = Math.max(0, t/TOTAL_TIME*100);
+    els.timerFill.style.width = pct + '%';
+    els.timerFill.classList.remove('warn','danger');
+    if(t <= 10) els.timerFill.classList.add('danger');
+    else if(t <= 18) els.timerFill.classList.add('warn');
+  }
+
+  function selectAnswer(idx){
+    if(state.answered) return;
+    state.answered = true;
+    clearInterval(timerInterval);
+    var item = quizData[state.index];
+    var buttons = els.optionsBox.querySelectorAll('.option');
+    buttons.forEach(function(b, i){
+      b.disabled = true;
+      if(i !== idx && i !== item.correct) b.classList.add('dim');
+    });
+
+    var isCorrect = idx === item.correct;
+    var stamp = document.createElement('div');
+    stamp.className = 'stamp ' + (isCorrect ? 'ok' : 'no');
+    stamp.textContent = isCorrect ? 'Deferido' : 'Indeferido';
+    document.querySelector('.stamp-wrap').appendChild(stamp);
+    sfxStamp();
+    els.judge.classList.remove('bang');
+    void els.judge.offsetWidth;
+    els.judge.classList.add('bang');
+
+    if(idx >= 0){
+      buttons[idx].classList.add(isCorrect ? 'correct' : 'wrong');
+    }
+    if(!isCorrect){
+      buttons[item.correct].classList.add('correct');
+      buttons[item.correct].classList.remove('dim');
+    }
+
+    if(isCorrect){
+      state.correct++;
+      state.streak++;
+      var bonus = 100 + (state.streak-1) * 10;
+      state.score += bonus;
+      sfxCorrect();
+      if(state.correct === 6 || state.correct === 14 || state.correct === 22 || state.correct === 30){
+        showToast('🏅 Nova patente em vista! Continue assim.');
+        burstConfetti(40);
+      }
+    }else{
+      state.streak = 0;
+      state.lives--;
+      sfxWrong();
+    }
+
+    els.explanationText.textContent = item.exp;
+    els.explanation.classList.add('show');
+    renderHud();
+
+    if(state.lives <= 0){
+      els.btnNext.style.display = 'none';
+      setTimeout(function(){ endQuiz(false); }, 1400);
+    }else{
+      els.btnNext.style.display = 'inline-block';
+    }
+  }
+
+  els.btnNext.addEventListener('click', function(){
+    state.index++;
+    loadQuestion();
+  });
+
+  function rankFor(pct, revelia){
+    if(revelia) return { rank:'Revel(a)', msg:'Seus recursos se esgotaram e o processo foi julgado à revelia. Isso acontece até com os melhores estagiários — releia a fundamentação de cada questão e tente recorrer.' };
+    if(pct >= 90) return { rank:'Juiz(a) Togado(a)', msg:'Sentença mantida em todas as instâncias. Domínio sólido de Direito Empresarial — a banca está impressionada.' };
+    if(pct >= 70) return { rank:'Sócio(a) Sênior', msg:'Boa fundamentação na maioria dos processos. Falta pouco para a toga — revise os pontos que escaparam.' };
+    if(pct >= 40) return { rank:'Associado(a) Júnior', msg:'Base razoável, mas alguns despachos saíram equivocados. Vale revisar sociedades, títulos de crédito e falência.' };
+    return { rank:'Estagiário(a) em Apuros', msg:'O processo foi turbulento, mas todo jurista começa assim. Releia as fundamentações e tente recorrer da sentença.' };
+  }
+
+  function endQuiz(finished){
+    clearInterval(timerInterval);
+    showScreen('result');
+    var pct = Math.round(state.correct/quizData.length*100);
+    var revelia = !finished && state.lives <= 0;
+    var info = rankFor(pct, revelia);
+
+    els.resultEyebrow.textContent = revelia ? 'Julgamento à revelia' : 'Sentença final';
+    els.resultTitle.textContent = revelia ? 'O processo correu sem você.' : 'Processo julgado e sentenciado.';
+    els.resultRank.textContent = info.rank;
+    els.resultMsg.textContent = info.msg;
+    els.statCorrect.textContent = state.correct + '/' + quizData.length;
+    els.statScore.textContent = state.score;
+    els.statPct.textContent = pct + '%';
+    els.resultSaved.textContent = 'Registrando no painel do professor...';
+
+    saveAttempt({
+      name: student.name,
+      email: student.email,
+      correct: state.correct,
+      total: quizData.length,
+      score: state.score,
+      pct: pct,
+      rank: info.rank,
+      revelia: !!revelia,
+      date: new Date().toISOString()
+    });
+
+    if(!revelia && pct >= 70){ burstConfetti(140); }
+  }
+
+  // ---------- identificação do(a) aluno(a) ----------
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  function setFieldError(field, show){
+    field.classList.toggle('error', !!show);
+  }
+
+  els.registerForm.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = els.regName.value.trim();
+    var email = els.regEmail.value.trim();
+    var nameOk = name.length >= 3;
+    var emailOk = EMAIL_RE.test(email) && (!INSTITUTIONAL_DOMAIN || email.toLowerCase().indexOf(INSTITUTIONAL_DOMAIN.toLowerCase()) > -1);
+
+    setFieldError(els.fieldName, !nameOk);
+    setFieldError(els.fieldEmail, !emailOk);
+    if(!nameOk || !emailOk) return;
+
+    student.name = name;
+    student.email = email;
+    showScreen('intro');
+  });
+
+  els.regName.addEventListener('input', function(){ setFieldError(els.fieldName, false); });
+  els.regEmail.addEventListener('input', function(){ setFieldError(els.fieldEmail, false); });
+
+  els.btnStart.addEventListener('click', function(){
+    els.btnStart.disabled = true;
+    var originalLabel = els.btnStart.textContent;
+    els.btnStart.textContent = 'Abrindo o processo...';
+    bankReady.then(function(){
+      els.btnStart.disabled = false;
+      els.btnStart.textContent = originalLabel;
+      startQuiz();
+    });
+  });
+  els.btnRestart.addEventListener('click', function(){
+    showScreen('register');
+    els.registerForm.reset();
+    setFieldError(els.fieldName, false);
+    setFieldError(els.fieldEmail, false);
+    els.regName.value = student.name;
+    els.regEmail.value = student.email;
+  });
+
+  // ---------- persistência (painel do professor) ----------
+  // Troque a senha abaixo para proteger o painel do professor.
+  var TEACHER_PASSWORD = 'direito2026';
+  var teacherLoggedIn = false;
+
+  function saveAttempt(attempt){
+    var key = 'attempt:' + Date.now() + '-' + Math.random().toString(36).slice(2,8);
+    if(!window.storage || !window.storage.set){
+      els.resultSaved.textContent = '';
+      return;
+    }
+    window.storage.set(key, JSON.stringify(attempt), true).then(function(res){
+      els.resultSaved.textContent = res ? 'Resultado registrado no painel do professor.' : 'Não foi possível registrar o resultado agora.';
+    }).catch(function(){
+      els.resultSaved.textContent = 'Não foi possível registrar o resultado agora.';
+    });
+  }
+
+  function fmtDate(iso){
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+    }catch(e){ return iso || '—'; }
+  }
+
+  function pctPillClass(pct){
+    if(pct >= 70) return '';
+    if(pct >= 40) return 'mid';
+    return 'low';
+  }
+
+  var allAttempts = [];
+
+  function loadAttempts(){
+    els.rosterBody.innerHTML = '<tr><td colspan="7" style="text-align:center; opacity:0.7; font-family:var(--mono); font-size:0.8rem;">Carregando...</td></tr>';
+    els.rosterEmpty.style.display = 'none';
+    if(!window.storage || !window.storage.list){
+      els.rosterBody.innerHTML = '';
+      els.rosterEmpty.style.display = 'block';
+      els.rosterEmpty.textContent = 'Armazenamento indisponível neste ambiente.';
+      return;
+    }
+    window.storage.list('attempt:', true).then(function(res){
+      var keys = (res && res.keys) || [];
+      if(keys.length === 0){
+        allAttempts = [];
+        renderRoster();
+        return;
+      }
+      var promises = keys.map(function(k){
+        return window.storage.get(k, true).then(function(r){
+          try{ return JSON.parse(r.value); }catch(e){ return null; }
+        }).catch(function(){ return null; });
+      });
+      Promise.all(promises).then(function(list){
+        allAttempts = list.filter(function(a){ return a && a.email; });
+        renderRoster();
+      });
+    }).catch(function(){
+      els.rosterBody.innerHTML = '';
+      els.rosterEmpty.style.display = 'block';
+      els.rosterEmpty.textContent = 'Erro ao carregar os resultados. Tente atualizar novamente.';
+    });
+  }
+
+  function renderRoster(){
+    var q = (els.teacherSearch.value || '').trim().toLowerCase();
+    var list = allAttempts.filter(function(a){
+      if(!q) return true;
+      return (a.name||'').toLowerCase().indexOf(q) > -1 || (a.email||'').toLowerCase().indexOf(q) > -1;
+    });
+    list.sort(function(a,b){ return new Date(b.date) - new Date(a.date); });
+
+    var total = list.length;
+    var avgPct = total ? Math.round(list.reduce(function(s,a){return s+(a.pct||0);},0)/total) : 0;
+    var bestScore = total ? Math.max.apply(null, list.map(function(a){return a.score||0;})) : 0;
+    var uniqueStudents = {};
+    list.forEach(function(a){ uniqueStudents[(a.email||'').toLowerCase()] = true; });
+
+    els.teacherStats.innerHTML =
+      '<div><span class="num">' + total + '</span><span class="lbl">processos julgados</span></div>' +
+      '<div><span class="num">' + Object.keys(uniqueStudents).length + '</span><span class="lbl">alunos distintos</span></div>' +
+      '<div><span class="num">' + avgPct + '%</span><span class="lbl">aproveitamento médio</span></div>' +
+      '<div><span class="num">' + bestScore + '</span><span class="lbl">melhor honorário</span></div>';
+
+    if(total === 0){
+      els.rosterBody.innerHTML = '';
+      els.rosterEmpty.style.display = 'block';
+      els.rosterEmpty.textContent = 'Nenhum processo julgado ainda. Assim que os alunos concluírem o quiz, os resultados aparecem aqui.';
+      return;
+    }
+    els.rosterEmpty.style.display = 'none';
+
+    els.rosterBody.innerHTML = list.map(function(a){
+      var pillClass = pctPillClass(a.pct||0);
+      return '<tr>' +
+        '<td>' + escapeHtml(a.name||'—') + '</td>' +
+        '<td>' + escapeHtml(a.email||'—') + '</td>' +
+        '<td class="num">' + (a.correct!=null?a.correct:'—') + '/' + (a.total!=null?a.total:'—') + '</td>' +
+        '<td><span class="pill ' + pillClass + '">' + (a.pct!=null?a.pct:'—') + '%</span></td>' +
+        '<td class="num">' + (a.score!=null?a.score:'—') + '</td>' +
+        '<td>' + escapeHtml(a.rank||(a.revelia?'Revel(a)':'—')) + '</td>' +
+        '<td style="font-family:var(--mono); font-size:0.72rem; white-space:nowrap;">' + fmtDate(a.date) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];
+    });
+  }
+
+  function exportCsv(){
+    var rows = [['Nome','E-mail','Acertos','Total','Percentual','Honorarios','Patente','Revelia','Data']];
+    allAttempts.forEach(function(a){
+      rows.push([a.name, a.email, a.correct, a.total, a.pct, a.score, a.rank, a.revelia?'sim':'nao', a.date]);
+    });
+    var csv = rows.map(function(r){
+      return r.map(function(v){
+        var s = (v===undefined||v===null) ? '' : String(v);
+        return '"' + s.replace(/"/g,'""') + '"';
+      }).join(';');
+    }).join('\n');
+    var blob = new Blob(['\uFEFF' + csv], {type:'text/csv;charset=utf-8;'});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'tribunal-do-conhecimento-notas.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  els.btnOpenTeacher.addEventListener('click', function(){
+    showScreen('teacher');
+    els.teacherGate.style.display = 'block';
+    els.teacherDashboard.style.display = 'none';
+    els.teacherPass.value = '';
+    setFieldError(els.fieldTeacherPass, false);
+  });
+  els.btnBackFromGate.addEventListener('click', function(){ showScreen(student.email ? 'intro' : 'register'); });
+  els.btnTeacherLogin.addEventListener('click', function(){
+    if(els.teacherPass.value === TEACHER_PASSWORD){
+      teacherLoggedIn = true;
+      els.teacherGate.style.display = 'none';
+      els.teacherDashboard.style.display = 'block';
+      switchTeacherTab('notas');
+      loadAttempts();
+    }else{
+      setFieldError(els.fieldTeacherPass, true);
+    }
+  });
+  els.teacherPass.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') els.btnTeacherLogin.click();
+  });
+  els.teacherPass.addEventListener('input', function(){ setFieldError(els.fieldTeacherPass, false); });
+  els.btnTeacherLogout.addEventListener('click', function(){
+    teacherLoggedIn = false;
+    showScreen(student.email ? 'intro' : 'register');
+  });
+  els.btnRefresh.addEventListener('click', loadAttempts);
+  els.btnExport.addEventListener('click', exportCsv);
+  els.teacherSearch.addEventListener('input', renderRoster);
+
+  // ---------- gerenciamento de perguntas (CRUD) ----------
+  var OPTION_LETTERS = ['A','B','C','D'];
+  var qfEditingId = null;
+
+  function switchTeacherTab(tab){
+    var isNotas = tab === 'notas';
+    els.tabNotas.style.display = isNotas ? 'block' : 'none';
+    els.tabPerguntas.style.display = isNotas ? 'none' : 'block';
+    els.tabBtnNotas.classList.toggle('active', isNotas);
+    els.tabBtnPerguntas.classList.toggle('active', !isNotas);
+    if(!isNotas){
+      hideQuestionForm();
+      bankReady.then(renderQuestionManager);
+    }
+  }
+  els.tabBtnNotas.addEventListener('click', function(){ switchTeacherTab('notas'); });
+  els.tabBtnPerguntas.addEventListener('click', function(){ switchTeacherTab('perguntas'); });
+
+  function escapeAttr(s){ return escapeHtml(s).replace(/\n/g,' '); }
+
+  function renderQuestionManager(){
+    var q = (els.questionSearch.value || '').trim().toLowerCase();
+    var list = quizData.filter(function(item){
+      if(!q) return true;
+      return (item.topic||'').toLowerCase().indexOf(q) > -1 || (item.q||'').toLowerCase().indexOf(q) > -1;
+    });
+    els.questionCountHint.textContent = quizData.length + ' pergunta(s) no banco atual' + (q ? (' — ' + list.length + ' encontrada(s)') : '') + '. Alterações valem para todos os alunos que abrirem o quiz.';
+
+    if(list.length === 0){
+      els.questionList.innerHTML = '<p class="roster-empty">Nenhuma pergunta encontrada.</p>';
+      return;
+    }
+    els.questionList.innerHTML = list.map(function(item){
+      return '<div class="qrow" data-id="' + escapeAttr(item.id) + '">' +
+        '<div class="qrow-main">' +
+          '<div class="qrow-topic">' + escapeHtml(item.topic || 'Sem matéria') + '</div>' +
+          '<div class="qrow-text">' + escapeHtml(item.q) + '</div>' +
+        '</div>' +
+        '<div class="qrow-actions">' +
+          '<button type="button" class="q-edit-btn">Editar</button>' +
+          '<button type="button" class="q-del-btn danger">Excluir</button>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+
+    els.questionList.querySelectorAll('.q-edit-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.closest('.qrow').getAttribute('data-id');
+        var item = quizData.filter(function(q){ return q.id === id; })[0];
+        if(item) openQuestionForm(item);
+      });
+    });
+    els.questionList.querySelectorAll('.q-del-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.closest('.qrow').getAttribute('data-id');
+        if(!window.confirm('Excluir esta pergunta do banco? Essa ação vale para todos os alunos.')) return;
+        quizData = quizData.filter(function(q){ return q.id !== id; });
+        els.qTotal.textContent = quizData.length;
+        saveQuestionBank(quizData).then(renderQuestionManager);
+      });
+    });
+  }
+
+  function buildOptionRows(options, correctIndex){
+    options = options && options.length ? options : ['', '', '', ''];
+    while(options.length < 4) options.push('');
+    els.qfOptions.innerHTML = options.slice(0,4).map(function(opt, i){
+      return '<div class="qform-opt">' +
+        '<span class="opt-letter">' + OPTION_LETTERS[i] + '</span>' +
+        '<input type="radio" name="qf-correct" value="' + i + '"' + (i===correctIndex?' checked':'') + '>' +
+        '<input type="text" class="qf-opt-text" placeholder="Alternativa ' + OPTION_LETTERS[i] + '" value="' + escapeAttr(opt) + '">' +
+      '</div>';
+    }).join('') + '<p class="hint">Marque o botão à esquerda da alternativa correta.</p>';
+  }
+
+  function openQuestionForm(item){
+    qfEditingId = item ? item.id : null;
+    els.qfId.value = qfEditingId || '';
+    els.qfTopic.value = item ? item.topic : '';
+    els.qfQuestion.value = item ? item.q : '';
+    els.qfExp.value = item ? item.exp : '';
+    buildOptionRows(item ? item.options : null, item ? item.correct : 0);
+    els.qfErr.style.display = 'none';
+    els.questionFormWrap.style.display = 'block';
+    els.questionFormWrap.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+
+  function hideQuestionForm(){
+    els.questionFormWrap.style.display = 'none';
+    qfEditingId = null;
+  }
+
+  els.btnNewQuestion.addEventListener('click', function(){ openQuestionForm(null); });
+  els.btnCancelQuestion.addEventListener('click', hideQuestionForm);
+  els.questionSearch.addEventListener('input', renderQuestionManager);
+
+  els.btnSaveQuestion.addEventListener('click', function(){
+    var topic = els.qfTopic.value.trim();
+    var qText = els.qfQuestion.value.trim();
+    var expText = els.qfExp.value.trim();
+    var optionInputs = els.qfOptions.querySelectorAll('.qf-opt-text');
+    var options = Array.prototype.map.call(optionInputs, function(inp){ return inp.value.trim(); });
+    var correctRadio = els.qfOptions.querySelector('input[name="qf-correct"]:checked');
+    var correct = correctRadio ? parseInt(correctRadio.value, 10) : -1;
+
+    var allOptionsFilled = options.every(function(o){ return o.length > 0; });
+    var valid = topic && qText && expText && allOptionsFilled && correct >= 0;
+    if(!valid){
+      els.qfErr.style.display = 'block';
+      return;
+    }
+    els.qfErr.style.display = 'none';
+
+    if(qfEditingId){
+      quizData = quizData.map(function(item){
+        if(item.id !== qfEditingId) return item;
+        return { id: item.id, topic: topic, q: qText, options: options, correct: correct, exp: expText };
+      });
+    }else{
+      var newId = 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2,6);
+      quizData = quizData.concat([{ id: newId, topic: topic, q: qText, options: options, correct: correct, exp: expText }]);
+    }
+    els.qTotal.textContent = quizData.length;
+    saveQuestionBank(quizData).then(function(){
+      hideQuestionForm();
+      renderQuestionManager();
+    });
+  });
+
+  els.btnResetQuestions.addEventListener('click', function(){
+    if(!window.confirm('Restaurar o banco de perguntas para a versão original do curso? Todas as edições e perguntas adicionadas pelo professor serão perdidas.')) return;
+    quizData = DEFAULT_QUESTIONS.slice();
+    els.qTotal.textContent = quizData.length;
+    hideQuestionForm();
+    saveQuestionBank(quizData).then(renderQuestionManager);
+  });
+
+  // ---------- pegadinhas / juiz ----------
+  function showTaunt(){
+    var idx;
+    do{ idx = Math.floor(Math.random()*taunts.length); }while(idx===lastTauntIdx && taunts.length>1);
+    lastTauntIdx = idx;
+    els.taunt.textContent = taunts[idx];
+    els.taunt.classList.add('show');
+    setTimeout(function(){ els.taunt.classList.remove('show'); }, 3600);
+  }
+
+  function showToast(msg){
+    els.toast.textContent = msg;
+    els.toast.classList.add('show');
+    setTimeout(function(){ els.toast.classList.remove('show'); }, 2600);
+  }
+
+  // ---------- confete simples via canvas ----------
+  var canvas = document.getElementById('confetti');
+  var ctx = canvas.getContext('2d');
+  var particles = [];
+  function resizeCanvas(){ canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  var confettiColors = ['#c79a3d','#e3c063','#a5342b','#2c6b49','#e9e2cd'];
+  function burstConfetti(n){
+    for(var i=0;i<n;i++){
+      particles.push({
+        x: Math.random()*canvas.width,
+        y: -20 - Math.random()*80,
+        vx: (Math.random()-0.5)*3,
+        vy: 2 + Math.random()*3,
+        size: 4 + Math.random()*5,
+        rot: Math.random()*360,
+        vr: (Math.random()-0.5)*10,
+        color: confettiColors[Math.floor(Math.random()*confettiColors.length)],
+        life: 0
+      });
+    }
+    if(!confettiRunning){ confettiRunning = true; requestAnimationFrame(tickConfetti); }
+  }
+  var confettiRunning = false;
+  function tickConfetti(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    particles.forEach(function(p){
+      p.x += p.vx; p.y += p.vy; p.rot += p.vr; p.life++;
+      ctx.save();
+      ctx.translate(p.x,p.y);
+      ctx.rotate(p.rot*Math.PI/180);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size*0.6);
+      ctx.restore();
+    });
+    particles = particles.filter(function(p){ return p.y < canvas.height + 30 && p.life < 400; });
+    if(particles.length > 0){
+      requestAnimationFrame(tickConfetti);
+    }else{
+      confettiRunning = false;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+    }
+  }
+
+})();
+</script>
+</body>
+</html>
