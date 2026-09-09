@@ -1860,6 +1860,16 @@
     return { id: row.id, topic: row.topic, q: row.question, options: row.options, correct: row.correct_index, exp: row.explanation };
   }
 
+  function shuffledIndices(n){
+    var arr = [];
+    for(var i=0;i<n;i++) arr.push(i);
+    for(var i=arr.length-1;i>0;i--){
+      var j = Math.floor(Math.random()*(i+1));
+      var tmp = arr[i]; arr[i]=arr[j]; arr[j]=tmp;
+    }
+    return arr;
+  }
+
   var taunts = [
     "Nada de consultar o ChatGPT aí, hein? 👀",
     "Isso é feito individual, viu? Sem colinha.",
@@ -2054,10 +2064,12 @@
     if(oldStamp) oldStamp.remove();
 
     var letters = ['A','B','C','D'];
-    item.options.forEach(function(optText, i){
+    var order = shuffledIndices(item.options.length);
+    state.currentOrder = order; // posição exibida -> índice original da alternativa
+    order.forEach(function(origIdx, i){
       var btn = document.createElement('button');
       btn.className = 'option';
-      btn.innerHTML = '<span class="letter">'+letters[i]+'</span><span>'+optText+'</span>';
+      btn.innerHTML = '<span class="letter">'+letters[i]+'</span><span>'+item.options[origIdx]+'</span>';
       btn.addEventListener('click', function(){ selectAnswer(i); });
       els.optionsBox.appendChild(btn);
     });
@@ -2096,13 +2108,14 @@
     state.answered = true;
     clearInterval(timerInterval);
     var item = quizData[state.index];
+    var correctPos = state.currentOrder.indexOf(item.correct);
     var buttons = els.optionsBox.querySelectorAll('.option');
     buttons.forEach(function(b, i){
       b.disabled = true;
-      if(i !== idx && i !== item.correct) b.classList.add('dim');
+      if(i !== idx && i !== correctPos) b.classList.add('dim');
     });
 
-    var isCorrect = idx === item.correct;
+    var isCorrect = idx === correctPos;
     var stamp = document.createElement('div');
     stamp.className = 'stamp ' + (isCorrect ? 'ok' : 'no');
     stamp.textContent = isCorrect ? 'Deferido' : 'Indeferido';
@@ -2116,8 +2129,8 @@
       buttons[idx].classList.add(isCorrect ? 'correct' : 'wrong');
     }
     if(!isCorrect){
-      buttons[item.correct].classList.add('correct');
-      buttons[item.correct].classList.remove('dim');
+      buttons[correctPos].classList.add('correct');
+      buttons[correctPos].classList.remove('dim');
     }
 
     if(isCorrect){
@@ -2401,6 +2414,7 @@
       els.btnTeacherLogin.disabled = false;
       if(data && data.ok){
         teacherLoggedIn = true;
+        teacherPassword = attemptedPassword;
         els.teacherGate.style.display = 'none';
         els.teacherDashboard.style.display = 'block';
         switchTeacherTab('notas');
