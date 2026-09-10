@@ -607,6 +607,7 @@
     box-shadow:none;
   }
   .btn.gold-outline:active{transform:translateY(1px);}
+  .btn.gold-outline.active{background:var(--gold); color:#2c1f05;}
 
   .qform{
     background:rgba(0,0,0,0.05);
@@ -714,6 +715,15 @@
           <input type="email" id="reg-email" autocomplete="email" placeholder="Ex.: maria.souza@unifenas.br" required>
           <p class="hint" id="email-hint">Use o e-mail fornecido pela sua instituição de ensino.</p>
           <span class="err-msg">Informe um e-mail institucional válido.</span>
+        </div>
+        <div class="field" id="field-turma">
+          <label for="reg-turma">Turma</label>
+          <select id="reg-turma" required style="width:100%; font-family:var(--serif); font-size:1rem; padding:12px 14px; border:1.5px solid var(--paper-shadow); border-radius:3px; background:rgba(255,255,255,0.45); color:var(--ink-text);">
+            <option value="" disabled selected>Selecione sua turma</option>
+            <option value="4">4° período</option>
+            <option value="6">6° período</option>
+          </select>
+          <span class="err-msg">Selecione sua turma.</span>
         </div>
         <button type="submit" class="btn gold">Confirmar e abrir o processo →</button>
       </form>
@@ -845,6 +855,11 @@
           <button class="btn small tab-btn" id="tab-btn-perguntas" type="button">📝 Perguntas do quiz</button>
         </div>
 
+        <div class="tabs-row" style="margin-top:10px;">
+          <button class="btn small gold-outline turma-btn active" id="turma-btn-4" type="button" data-turma="4">4° período</button>
+          <button class="btn small gold-outline turma-btn" id="turma-btn-6" type="button" data-turma="6">6° período</button>
+        </div>
+
         <!-- ABA NOTAS -->
         <div id="tab-notas">
           <div class="teacher-toolbar" style="margin-top:16px;">
@@ -877,7 +892,7 @@
           <div class="teacher-toolbar" style="margin-top:16px;">
             <input type="text" id="question-search" placeholder="Buscar por matéria ou texto da pergunta...">
             <button class="btn small gold-outline" id="btn-new-question">+ Nova pergunta</button>
-            <button class="btn small" id="btn-reset-questions">↺ Restaurar originais</button>
+            <button class="btn small" id="btn-reset-questions">🗑 Esvaziar banco desta turma</button>
           </div>
           <p class="hint" id="question-count-hint" style="margin-bottom:14px;"></p>
 
@@ -885,6 +900,13 @@
           <div id="question-form-wrap" style="display:none;">
             <div class="qform">
               <input type="hidden" id="qf-id">
+              <div class="field">
+                <label for="qf-turma">Turma</label>
+                <select id="qf-turma" style="width:100%; font-family:var(--serif); font-size:0.95rem; padding:9px 12px; border:1.5px solid var(--paper-shadow); border-radius:3px; background:rgba(255,255,255,0.45); color:var(--ink-text);">
+                  <option value="4">4° período</option>
+                  <option value="6">6° período</option>
+                </select>
+              </div>
               <div class="field">
                 <label for="qf-topic">Matéria</label>
                 <input type="text" id="qf-topic" placeholder="Ex.: Recuperação Judicial">
@@ -990,839 +1012,9 @@
 (function(){
   "use strict";
 
-  var DEFAULT_QUESTIONS = [
-    {
-      id: "q1",
-      topic: "Direito Empresarial Geral",
-      q: "Segundo o Código Civil, considera-se empresário quem exerce profissionalmente:",
-      options: [
-        "Atividade intelectual de natureza científica, literária ou artística",
-        "Atividade econômica organizada para a produção ou circulação de bens ou serviços",
-        "Atividade de natureza exclusivamente rural, ainda que sem qualquer registro",
-        "Qualquer atividade lucrativa, ainda que eventual"
-      ],
-      correct: 1,
-      exp: "Art. 966 do Código Civil. O exercício de profissão intelectual, científica, literária ou artística não é considerado empresarial, salvo se constituir elemento de empresa."
-    },
-    {
-      id: "q2",
-      topic: "Direito Empresarial Geral",
-      q: "Na sociedade limitada, a responsabilidade dos sócios é, em regra:",
-      options: [
-        "Ilimitada, alcançando todo o patrimônio pessoal de cada sócio",
-        "Restrita ao valor de suas quotas, respondendo todos solidariamente pela integralização do capital social",
-        "Limitada apenas ao sócio administrador",
-        "Inexistente, já que a sociedade responde sozinha por tudo"
-      ],
-      correct: 1,
-      exp: "Art. 1.052 do Código Civil: cada sócio responde pelo valor de suas quotas, mas todos respondem solidariamente pela integralização do capital social."
-    },
-    {
-      id: "q3",
-      topic: "Direito Empresarial Geral",
-      q: "O que diferencia, essencialmente, uma marca de uma patente?",
-      options: [
-        "Marca protege invenções; patente protege sinais distintivos",
-        "Marca identifica produtos ou serviços; patente protege invenções e modelos de utilidade",
-        "Ambas protegem exatamente o mesmo tipo de bem imaterial",
-        "Marca tem proteção perpétua; patente nunca expira"
-      ],
-      correct: 1,
-      exp: "Lei 9.279/96 (LPI): a marca distingue produtos/serviços no mercado; a patente protege invenções e modelos de utilidade."
-    },
-    {
-      id: "q4",
-      topic: "Direito Empresarial Geral",
-      q: "Sobre a Sociedade Anônima (S.A.), assinale a alternativa correta:",
-      options: [
-        "O capital social é dividido em quotas",
-        "O capital é dividido em ações e a responsabilidade do acionista se limita ao preço de emissão das ações que possui",
-        "É sempre fechada, jamais podendo negociar ações em bolsa",
-        "É classificada como sociedade de pessoas, nunca de capital"
-      ],
-      correct: 1,
-      exp: "Lei 6.404/76, art. 1º: capital dividido em ações; a responsabilidade do acionista é limitada ao preço de emissão das ações subscritas ou adquiridas."
-    },
-    {
-      id: "q5",
-      topic: "Direito Empresarial Geral",
-      q: "Qual título de crédito representa uma ordem de pagamento à vista, sacada contra uma instituição bancária?",
-      options: [
-        "Nota promissória",
-        "Duplicata",
-        "Cheque",
-        "Letra de câmbio"
-      ],
-      correct: 2,
-      exp: "O cheque (Lei 7.357/85) é ordem de pagamento à vista dada pelo emitente contra o banco sacado, onde mantém fundos disponíveis."
-    },
-    {
-      id: "q6",
-      topic: "Direito Empresarial Geral",
-      q: "A emissão da duplicata mercantil está necessariamente vinculada a:",
-      options: [
-        "Um contrato de mútuo bancário",
-        "Uma compra e venda mercantil ou prestação de serviços",
-        "A constituição de uma sociedade empresária",
-        "Uma doação entre empresários"
-      ],
-      correct: 1,
-      exp: "A duplicata (Lei 5.474/68) é título causal: só pode ser emitida com base em fatura de compra e venda mercantil ou de prestação de serviços."
-    },
-    {
-      id: "q7",
-      topic: "Direito Empresarial Geral",
-      q: "Conforme a Lei 11.101/2005, a recuperação judicial tem por objetivo principal:",
-      options: [
-        "Liquidar de imediato todo o patrimônio do devedor",
-        "Viabilizar a superação da crise econômico-financeira, preservando a fonte produtora, o emprego e os interesses dos credores",
-        "Extinguir a empresa e transferir os sócios para outra sociedade",
-        "Converter automaticamente a empresa em sociedade anônima"
-      ],
-      correct: 1,
-      exp: "Art. 47 da Lei 11.101/2005: a recuperação judicial busca viabilizar a superação da crise, preservando a empresa, sua função social e o estímulo à atividade econômica."
-    },
-    {
-      id: "q8",
-      topic: "Direito Empresarial Geral",
-      q: "Sobre o nome empresarial, é correto afirmar que ele pode adotar a forma de:",
-      options: [
-        "Apenas firma, em qualquer tipo societário",
-        "Apenas denominação, em qualquer tipo societário",
-        "Firma ou denominação, a depender do tipo societário adotado",
-        "Nenhuma das anteriores, pois empresário não tem nome"
-      ],
-      correct: 2,
-      exp: "O Código Civil admite firma (razão social) ou denominação, conforme o tipo societário — por exemplo, a S.A. usa denominação, enquanto sociedades de pessoas costumam usar firma."
-    },
-    {
-      id: "q9",
-      topic: "Direito Empresarial Geral",
-      q: "O estabelecimento empresarial (art. 1.142, CC) é definido como:",
-      options: [
-        "Sinônimo de sociedade empresária",
-        "O complexo de bens organizado para o exercício da empresa",
-        "Apenas o imóvel onde a empresa funciona",
-        "O patrimônio pessoal do empresário, distinto da atividade"
-      ],
-      correct: 1,
-      exp: "O estabelecimento (antigo 'fundo de comércio') é o conjunto organizado de bens materiais e imateriais usado no exercício da atividade empresarial."
-    },
-    {
-      id: "q10",
-      topic: "Direito Empresarial Geral",
-      q: "No contrato de franquia empresarial, o franqueador, em regra:",
-      options: [
-        "Vende integralmente seu negócio ao franqueado, extinguindo o vínculo entre as partes",
-        "Cede o direito de uso de marca e know-how mediante remuneração, mantendo padrões, supervisão e assistência",
-        "Assume diretamente a administração de todas as unidades franqueadas",
-        "Está proibido de cobrar royalties do franqueado"
-      ],
-      correct: 1,
-      exp: "Lei 13.966/2019: a franquia envolve cessão do direito de uso de marca/know-how, com o franqueador mantendo padrões de qualidade e prestando assistência ao franqueado."
-    },
-    {
-      id: "q11",
-      topic: "Direito Empresarial Geral",
-      q: "A recuperação extrajudicial se diferencia da judicial principalmente porque:",
-      options: [
-        "É apenas homologada em juízo após negociação prévia com credores, com menor grau de intervenção judicial",
-        "Dispensa qualquer aprovação de credores",
-        "É concedida automaticamente, sem qualquer processo formal",
-        "Só pode ser utilizada por sociedades anônimas de capital aberto"
-      ],
-      correct: 0,
-      exp: "Na recuperação extrajudicial, o plano é negociado diretamente com os credores e depois levado para homologação judicial, com participação do Judiciário mais restrita do que na recuperação judicial."
-    },
-    {
-      id: "q12",
-      topic: "Direito Empresarial Geral",
-      q: "A desconsideração da personalidade jurídica (art. 50, CC) pode ser aplicada quando houver:",
-      options: [
-        "Qualquer dívida da sociedade, independentemente de fraude ou abuso",
-        "Abuso da personalidade jurídica, caracterizado por desvio de finalidade ou confusão patrimonial",
-        "Apenas quando decretada a falência da sociedade",
-        "Exclusivamente contra sociedades limitadas"
-      ],
-      correct: 1,
-      exp: "O art. 50 do CC exige abuso da personalidade jurídica — desvio de finalidade ou confusão patrimonial — para autorizar a desconsideração."
-    },
-    {
-      id: "q13",
-      topic: "Direito Empresarial Geral",
-      q: "O registro do empresário e da sociedade empresária deve ser feito perante:",
-      options: [
-        "O Cartório de Registro Civil de Pessoas Naturais",
-        "A Junta Comercial, órgão do Registro Público de Empresas Mercantis",
-        "O Cartório de Notas do domicílio do sócio majoritário",
-        "Exclusivamente a Receita Federal"
-      ],
-      correct: 1,
-      exp: "Lei 8.934/94: empresários e sociedades empresárias registram seus atos constitutivos na Junta Comercial de seu Estado."
-    },
-    {
-      id: "q14",
-      topic: "Direito Empresarial Geral",
-      q: "Sobre a nota promissória, é correto afirmar que:",
-      options: [
-        "É uma ordem de pagamento dada por um sacador contra um sacado",
-        "É uma promessa de pagamento feita pelo próprio emitente (promitente) diretamente ao beneficiário",
-        "Só pode ser emitida por instituições financeiras",
-        "Não é considerada título de crédito pela legislação brasileira"
-      ],
-      correct: 1,
-      exp: "Diferente do cheque e da letra de câmbio (ordens de pagamento), a nota promissória é uma promessa: o próprio emitente se compromete a pagar ao beneficiário."
-    },
 
-    /* ---------- RECUPERAÇÃO JUDICIAL ---------- */
-    {
-      id: "q15",
-      topic: "Recuperação Judicial",
-      q: "Além do próprio empresário ou sociedade empresária em crise, a Lei 11.101/2005 também legitima a requerer a recuperação judicial:",
-      options: [
-        "Qualquer credor titular de crédito quirografário",
-        "O cônjuge sobrevivente, os herdeiros do devedor, o inventariante e o sócio remanescente",
-        "Apenas o administrador judicial já nomeado em processo anterior",
-        "O Ministério Público, de ofício"
-      ],
-      correct: 1,
-      exp: "Art. 48, caput, e art. 53, §1º, da Lei 11.101/05: além do empresário/sociedade em crise, podem requerer a recuperação judicial o cônjuge sobrevivente, os herdeiros, o inventariante e o sócio remanescente."
-    },
-    {
-      id: "q16",
-      topic: "Recuperação Judicial",
-      q: "Nos termos do art. 3º da Lei 11.101/2005, é competente para a recuperação judicial e a falência o juízo:",
-      options: [
-        "Do domicílio pessoal do sócio majoritário",
-        "Do local de registro do CNPJ, ainda que ali não haja qualquer atividade",
-        "Do principal estabelecimento do devedor, entendido como aquele onde está centralizado o maior volume de negócios ou o centro decisório, mesmo que fixado de outra forma consensual ou contratual",
-        "Do foro eleito livremente pelo devedor em contrato, independentemente de onde a empresa efetivamente opera"
-      ],
-      correct: 2,
-      exp: "Art. 3º da Lei 11.101/05: competente é o juízo do principal estabelecimento do devedor — aquele onde se concentra o maior volume de negócios ou o centro decisório, ainda que estabelecido de outra forma consensual ou contratualmente."
-    },
-    {
-      id: "q17",
-      topic: "Recuperação Judicial",
-      q: "Deferido o processamento da recuperação judicial, as execuções contra o devedor ficam suspensas (stay period) pelo prazo de:",
-      options: [
-        "60 dias, improrrogáveis",
-        "90 dias, prorrogáveis indefinidamente",
-        "180 dias, prorrogáveis por igual período, uma única vez e em caráter excepcional, desde que o devedor não tenha concorrido para a superação do prazo",
-        "360 dias, sem qualquer possibilidade de prorrogação"
-      ],
-      correct: 2,
-      exp: "Art. 6º da Lei 11.101/05: a suspensão das execuções dura 180 dias contados do deferimento do processamento, prorrogáveis uma única vez, em caráter excepcional, se o devedor não houver concorrido para a superação do prazo."
-    },
-    {
-      id: "q18",
-      topic: "Recuperação Judicial",
-      q: "O plano de recuperação judicial deve ser apresentado pelo devedor em juízo no prazo de:",
-      options: [
-        "30 dias, prorrogáveis a critério do juiz",
-        "45 dias, improrrogáveis",
-        "60 dias, improrrogáveis, sob pena de convolação em falência",
-        "90 dias, mediante autorização do administrador judicial"
-      ],
-      correct: 2,
-      exp: "Art. 53, caput, da Lei 11.101/05: o plano deve ser apresentado no prazo improrrogável de 60 dias da publicação da decisão que defere o processamento, sob pena de convolação em falência."
-    },
-    {
-      id: "q19",
-      topic: "Recuperação Judicial",
-      q: "Quanto aos créditos derivados da legislação do trabalho ou de acidente de trabalho vencidos até o pedido, o plano de recuperação judicial não pode prever prazo de pagamento superior a:",
-      options: [
-        "6 meses",
-        "1 ano",
-        "2 anos",
-        "30 dias"
-      ],
-      correct: 1,
-      exp: "Art. 54, caput, da Lei 11.101/05: o plano não pode prever prazo superior a 1 ano para pagamento dos créditos trabalhistas ou de acidente de trabalho vencidos até o pedido."
-    },
-    {
-      id: "q20",
-      topic: "Recuperação Judicial",
-      q: "Já os créditos de natureza estritamente salarial vencidos nos 3 meses anteriores ao pedido de recuperação judicial, até o limite de 5 salários-mínimos por trabalhador, devem ser pagos em prazo não superior a:",
-      options: [
-        "15 dias",
-        "30 dias",
-        "60 dias, sem limite de valor",
-        "90 dias, limitado a 10 salários-mínimos"
-      ],
-      correct: 1,
-      exp: "Art. 54, §1º, da Lei 11.101/05: prazo máximo de 30 dias para pagamento dos créditos estritamente salariais vencidos nos 3 meses anteriores ao pedido, até o limite de 5 salários-mínimos por trabalhador."
-    },
-    {
-      id: "q21",
-      topic: "Recuperação Judicial",
-      q: "O rol de meios de recuperação judicial previsto no art. 50 da Lei 11.101/2005 (concessão de prazos, cisão, aumento de capital, trespasse, conversão de dívida em capital social, entre outros) é:",
-      options: [
-        "Taxativo, não admitindo qualquer outro meio além dos listados",
-        "Exemplificativo, podendo o plano prever outros meios de recuperação não elencados no artigo",
-        "Aplicável apenas a sociedades anônimas de capital aberto",
-        "Condicionado à aprovação prévia do Ministério Público para qualquer meio adotado"
-      ],
-      correct: 1,
-      exp: "O art. 50 traz um rol exemplificativo de meios de recuperação judicial — o plano pode se valer de outros meios não listados, respeitada a legislação pertinente a cada caso."
-    },
-    {
-      id: "q22",
-      topic: "Recuperação Judicial",
-      q: "Segundo o entendimento do STJ, o plano de recuperação judicial aprovado pela assembleia-geral de credores possui índole predominantemente contratual, de modo que:",
-      options: [
-        "O juiz pode alterar livremente as cláusulas econômicas se discordar dos termos negociados",
-        "É vedado ao magistrado se imiscuir nas especificidades do conteúdo econômico aprovado entre devedor e credores, respeitados os quóruns legais, ainda que as deliberações permaneçam sujeitas a controle de legalidade",
-        "O juiz deve necessariamente rejeitar qualquer plano que preveja deságio de créditos",
-        "A homologação judicial é sempre discricionária, independentemente da vontade dos credores"
-      ],
-      correct: 1,
-      exp: "STJ, AgInt no AREsp 1.325.791/RJ: o plano aprovado tem índole contratual, sendo vedado ao juiz se imiscuir no conteúdo econômico pactuado — mas as deliberações continuam sujeitas aos requisitos de validade dos atos jurídicos, controláveis judicialmente."
-    },
-    {
-      id: "q23",
-      topic: "Recuperação Judicial",
-      q: "Nos termos do art. 41 da Lei 11.101/2005, a assembleia-geral de credores é composta pelas seguintes classes:",
-      options: [
-        "Apenas credores trabalhistas e credores quirografários",
-        "Titulares de créditos trabalhistas/acidentários; titulares de créditos com garantia real; titulares de créditos quirografários, com privilégio especial, geral ou subordinados; e titulares de créditos enquadrados como ME ou EPP",
-        "Apenas titulares de créditos com garantia real e credores fiscais",
-        "Sócios e credores, sem qualquer distinção de classes"
-      ],
-      correct: 1,
-      exp: "Art. 41 da Lei 11.101/05: são quatro as classes — créditos trabalhistas/acidentários (I), garantia real (II), quirografários/privilegiados/subordinados (III) e créditos de ME/EPP (IV)."
-    },
-    {
-      id: "q24",
-      topic: "Recuperação Judicial",
-      q: "A aprovação forçada do plano de recuperação judicial pela via do 'cram down' exige, cumulativamente:",
-      options: [
-        "Voto favorável de credores que representem mais da metade do valor de todos os créditos presentes, independentemente de classe; aprovação de duas das classes votantes (ou de ao menos uma, se houver só duas com credores votantes); e, na classe que rejeitou o plano, voto favorável de mais de 1/3 dos credores",
-        "Unanimidade em todas as classes de credores",
-        "Aprovação exclusiva da classe de credores trabalhistas",
-        "Rejeição do plano por todas as classes, desde que o juiz entenda o plano economicamente viável"
-      ],
-      correct: 0,
-      exp: "O juiz pode conceder a recuperação mesmo sem aprovação plena da assembleia se, cumulativamente: (a) houver voto favorável de mais da metade do valor de todos os créditos presentes; (b) duas classes aprovarem (ou uma, havendo só duas votantes); e (c) na classe dissidente, mais de 1/3 tenha votado a favor."
-    },
-    {
-      id: "q25",
-      topic: "Recuperação Judicial",
-      q: "Da decisão que concede a recuperação judicial cabe:",
-      options: [
-        "Apelação, com efeito suspensivo",
-        "Agravo de instrumento, que pode ser interposto por qualquer credor ou pelo representante do Ministério Público",
-        "Mandado de segurança, exclusivo do devedor",
-        "Nenhum recurso, por se tratar de decisão irrecorrível"
-      ],
-      correct: 1,
-      exp: "Da decisão que concede a recuperação judicial cabe agravo de instrumento, que pode ser interposto por qualquer credor ou pelo representante do Ministério Público."
-    },
-    {
-      id: "q26",
-      topic: "Recuperação Judicial",
-      q: "São hipóteses de convolação da recuperação judicial em falência, conforme o art. 73 da Lei 11.101/2005:",
-      options: [
-        "Apenas a não apresentação do plano no prazo do art. 53",
-        "Deliberação da assembleia-geral de credores; não apresentação do plano no prazo legal; descumprimento de obrigação assumida no plano; e esvaziamento patrimonial que implique liquidação substancial da empresa em prejuízo dos credores não sujeitos à recuperação",
-        "Exclusivamente o não pagamento dos honorários do administrador judicial",
-        "Qualquer atraso superior a 5 dias no cumprimento de obrigação prevista no plano"
-      ],
-      correct: 1,
-      exp: "Art. 73 da Lei 11.101/05 traz seis hipóteses de convolação em falência, entre elas deliberação assemblear, não apresentação do plano, descumprimento de obrigação assumida e esvaziamento patrimonial da devedora."
-    },
-    {
-      id: "q27",
-      topic: "Recuperação Judicial",
-      q: "O encerramento da recuperação judicial, previsto no art. 63 da Lei 11.101/2005, ocorre quando:",
-      options: [
-        "Decorridos 6 meses da concessão, independentemente do cumprimento de qualquer obrigação",
-        "Cumpridas as obrigações vencidas no prazo de 2 anos de supervisão judicial (art. 61), hipótese em que o juiz decreta por sentença o encerramento",
-        "A critério exclusivo do administrador judicial, sem necessidade de sentença",
-        "Automaticamente, sem qualquer decisão judicial"
-      ],
-      correct: 1,
-      exp: "Art. 63 da Lei 11.101/05: cumpridas as obrigações vencidas no prazo do art. 61 (2 anos de fiscalização judicial), o juiz decreta por sentença o encerramento da recuperação judicial."
-    },
-
-    /* ---------- RECUPERAÇÃO ESPECIAL ---------- */
-    {
-      id: "q28",
-      topic: "Recuperação Especial",
-      q: "A recuperação judicial especial, prevista no art. 70 e seguintes da Lei 11.101/2005, destina-se, em regra, a:",
-      options: [
-        "Qualquer empresário, independentemente do porte da empresa",
-        "Microempresas e empresas de pequeno porte, conforme os critérios da LC 123/2006 (c/c LC 155/2016), e ao produtor rural cujo valor da causa não exceda o teto legal",
-        "Exclusivamente sociedades anônimas de capital aberto",
-        "Instituições financeiras em liquidação extrajudicial"
-      ],
-      correct: 1,
-      exp: "A recuperação especial é voltada a microempresas e empresas de pequeno porte (critérios da LC 123/2006 c/c LC 155/2016) e, também, ao produtor rural, desde que o valor da causa não exceda R$ 4.800.000,00."
-    },
-    {
-      id: "q29",
-      topic: "Recuperação Especial",
-      q: "O plano de recuperação especial de microempresas e empresas de pequeno porte deve prever, entre outras condições:",
-      options: [
-        "Parcelamento em até 60 parcelas mensais, corrigidas pela taxa CDI",
-        "Parcelamento em até 36 parcelas mensais, iguais e sucessivas, corrigidas monetariamente e com juros equivalentes à SELIC, com pagamento da primeira parcela em até 180 dias da distribuição do pedido",
-        "Pagamento à vista obrigatório em até 90 dias",
-        "Parcelamento sem qualquer correção monetária ou incidência de juros"
-      ],
-      correct: 1,
-      exp: "Art. 72, caput e alíneas, da Lei 11.101/05: parcelamento em até 36 parcelas mensais corrigidas pela SELIC, com a primeira parcela paga em até 180 dias da distribuição do pedido."
-    },
-    {
-      id: "q30",
-      topic: "Recuperação Especial",
-      q: "Durante a recuperação especial, para que o devedor aumente despesas ou contrate empregados, a Lei exige:",
-      options: [
-        "Apenas a comunicação ao Ministério Público",
-        "Autorização do juiz, ouvidos o administrador judicial e o comitê de credores",
-        "Aprovação prévia da assembleia-geral de credores",
-        "Nenhuma formalidade, bastando decisão do próprio devedor"
-      ],
-      correct: 1,
-      exp: "Art. 72, alínea 'd', da Lei 11.101/05: o plano estabelecerá a necessidade de autorização do juiz, ouvidos o administrador judicial e o comitê de credores, para o devedor aumentar despesas ou contratar empregados."
-    },
-    {
-      id: "q31",
-      topic: "Recuperação Especial",
-      q: "Sobre a convocação de assembleia-geral de credores na recuperação especial, é correto afirmar que:",
-      options: [
-        "É sempre obrigatória, sob pena de nulidade do plano",
-        "O juiz poderá autorizar a recuperação especial sem a convocação de assembleia-geral",
-        "Somente pode ser dispensada mediante anuência unânime de todos os credores",
-        "É expressamente vedada pela Lei 11.101/2005"
-      ],
-      correct: 1,
-      exp: "No plano especial, o juiz poderá autorizar a recuperação sem a convocação de assembleia-geral, dada a natureza mais simplificada do procedimento voltado a ME e EPP."
-    },
-
-    /* ---------- RECUPERAÇÃO EXTRAJUDICIAL ---------- */
-    {
-      id: "q32",
-      topic: "Recuperação Extrajudicial",
-      q: "São requisitos para que o devedor requeira a recuperação extrajudicial, nos termos do art. 48 da Lei 11.101/2005:",
-      options: [
-        "Regularidade da atividade, exercício regular há mais de 2 anos, não ser falido (ou ter suas obrigações extintas por sentença) e não ter sido condenado, nem ter administrador ou sócio controlador condenado, por crime que impeça a administração de empresa",
-        "Exercício da atividade há pelo menos 5 anos e capital social mínimo definido em lei",
-        "Ser exclusivamente sociedade limitada",
-        "Ausência de qualquer dívida tributária em aberto"
-      ],
-      correct: 0,
-      exp: "Art. 48 da Lei 11.101/05: regularidade, exercício regular da atividade há mais de 2 anos, não ser falido (ou já ter suas obrigações declaradas extintas) e não ter condenação por crime que impeça a administração de empresas."
-    },
-    {
-      id: "q33",
-      topic: "Recuperação Extrajudicial",
-      q: "Na negociação da recuperação extrajudicial, limitada pelo princípio da par conditio creditorum, o devedor não pode:",
-      options: [
-        "Negociar livremente com credores quirografários em geral",
-        "Dispor sobre créditos de natureza tributária, trabalhista ou decorrentes de acidente de trabalho, nem prever pagamento antecipado de dívidas ou tratamento desfavorável a credores não sujeitos ao plano",
-        "Negociar créditos com garantia real, desde que haja anuência do devedor",
-        "Incluir qualquer crédito no plano, desde que este seja homologado judicialmente"
-      ],
-      correct: 1,
-      exp: "Art. 161, §§1º e 2º, da Lei 11.101/05: a negociação não pode dispor sobre créditos tributários, trabalhistas e de acidente de trabalho, nem prever pagamento antecipado de dívidas ou tratamento desfavorável aos credores não sujeitos ao plano."
-    },
-    {
-      id: "q34",
-      topic: "Recuperação Extrajudicial",
-      q: "Qual a principal diferença entre o plano individualizado (art. 162) e o plano por classe de credores (art. 163) na recuperação extrajudicial?",
-      options: [
-        "O plano individualizado obriga automaticamente todos os credores da mesma classe, mesmo os que não assinaram",
-        "O plano por classe exige assinatura de credores que representem mais da metade dos créditos de uma ou mais classes, obrigando a totalidade dos credores daquela espécie; já o individualizado restringe-se aos credores que efetivamente aderiram",
-        "Ambos exigem homologação judicial obrigatória e produzem exatamente os mesmos efeitos",
-        "O plano por classe nunca pode alcançar credores dissidentes"
-      ],
-      correct: 1,
-      exp: "No plano por classe (art. 163), a assinatura de credores que representem mais da metade dos créditos de uma ou mais classes obriga a totalidade dos credores da espécie; no plano individualizado (art. 162), a negociação e os efeitos ficam restritos aos credores que aderiram."
-    },
-    {
-      id: "q35",
-      topic: "Recuperação Extrajudicial",
-      q: "O pedido de homologação do plano de recuperação extrajudicial:",
-      options: [
-        "Acarreta a suspensão de todas as ações e execuções contra o devedor, à semelhança da recuperação judicial",
-        "Não acarreta suspensão de direitos, ações ou execuções, nem impede o pedido de decretação de falência pelos credores não sujeitos ao plano",
-        "Suspende automaticamente a exigibilidade de todos os créditos tributários do devedor",
-        "Extingue todas as garantias reais constituídas anteriormente ao pedido"
-      ],
-      correct: 1,
-      exp: "Art. 161, §4º, da Lei 11.101/05: o pedido de homologação não acarreta suspensão de direitos, ações ou execuções, nem a impossibilidade de pedido de falência pelos credores não sujeitos ao plano."
-    },
-    {
-      id: "q36",
-      topic: "Recuperação Extrajudicial",
-      q: "Após a publicação do edital convocando os credores, o prazo para impugnação do plano de recuperação extrajudicial é de:",
-      options: [
-        "15 dias",
-        "30 dias, contados da publicação do edital, devendo o credor juntar prova de seu crédito",
-        "60 dias",
-        "90 dias"
-      ],
-      correct: 1,
-      exp: "Art. 164, §2º (c/c art. 64, §2º), da Lei 11.101/05: os credores têm 30 dias, contados da publicação do edital, para impugnar o plano, juntando prova de seu crédito."
-    },
-    {
-      id: "q37",
-      topic: "Recuperação Extrajudicial",
-      q: "Da sentença que homologa ou julga improcedente o pedido de recuperação extrajudicial cabe:",
-      options: [
-        "Agravo de instrumento, com efeito suspensivo",
-        "Apelação, sem efeito suspensivo",
-        "Embargos infringentes, exclusivamente",
-        "Nenhum recurso, por ser decisão irrecorrível"
-      ],
-      correct: 1,
-      exp: "Art. 164, §8º, da Lei 11.101/05: da sentença que homologar ou julgar improcedente o pedido cabe apelação, sem efeito suspensivo."
-    },
-    {
-      id: "q38",
-      topic: "Recuperação Extrajudicial",
-      q: "Uma vez homologado judicialmente, o plano de recuperação extrajudicial:",
-      options: [
-        "Só produz efeitos após o trânsito em julgado da sentença homologatória",
-        "Passa a constituir título executivo judicial e gera efeitos imediatos, independentemente da interposição de recursos",
-        "Somente produz efeitos após o decurso de 2 anos de supervisão judicial",
-        "Depende de nova assembleia-geral para produzir efeitos"
-      ],
-      correct: 1,
-      exp: "Arts. 161, §6º, e 165, da Lei 11.101/05: o plano homologado constitui título executivo judicial e gera efeitos imediatos, independentemente da interposição de recursos (art. 164, §7º)."
-    },
-
-    /* ---------- TEORIA DA EMPRESA ---------- */
-    {
-      id: "q39",
-      topic: "Teoria da Empresa",
-      q: "São requisitos do elemento 'profissionalismo', na caracterização do empresário:",
-      options: [
-        "Habitualidade, pessoalidade e monopólio de informações",
-        "Capital, mão de obra e tecnologia",
-        "Registro na Junta Comercial e emissão de notas fiscais",
-        "Finalidade lucrativa e affectio societatis"
-      ],
-      correct: 0,
-      exp: "O profissionalismo, um dos elementos do conceito de empresário (art. 966, CC), pressupõe habitualidade no exercício da atividade, pessoalidade (o empresário atua em nome próprio) e monopólio das informações sobre o produto ou serviço perante o consumidor."
-    },
-    {
-      id: "q40",
-      topic: "Teoria da Empresa",
-      q: "São considerados os 4 fatores de produção que caracterizam a organização da atividade empresarial:",
-      options: [
-        "Capital, mão de obra, insumos e tecnologia",
-        "Sócios, administradores, credores e consumidores",
-        "Ativo, passivo, patrimônio líquido e faturamento",
-        "Registro, contrato social, CNPJ e alvará"
-      ],
-      correct: 0,
-      exp: "A organização da atividade empresarial pressupõe a articulação dos quatro fatores de produção: capital, mão de obra, insumos e tecnologia."
-    },
-    {
-      id: "q41",
-      topic: "Teoria da Empresa",
-      q: "São hipóteses de atividades econômicas civis (que não se submetem ao regime empresarial), EXCETO:",
-      options: [
-        "Quem não se enquadra no conceito do art. 966 do Código Civil",
-        "Profissionais intelectuais, salvo se constituírem elemento de empresa",
-        "Empresário rural não registrado na Junta Comercial",
-        "Sociedade limitada regularmente registrada, ainda que de pequeno porte"
-      ],
-      correct: 3,
-      exp: "As quatro hipóteses de atividades econômicas civis são: quem não se enquadra no art. 966, profissionais intelectuais (regra), empresário rural não registrado e cooperativas. Uma sociedade limitada regularmente registrada é sociedade empresária, não atividade civil."
-    },
-    {
-      id: "q42",
-      topic: "Teoria da Empresa",
-      q: "O profissional intelectual (científico, literário ou artístico) que exerce sua profissão, ainda que com o concurso de auxiliares, é considerado empresário quando:",
-      options: [
-        "Nunca é considerado empresário, em nenhuma hipótese",
-        "O exercício da profissão constituir elemento de empresa, isto é, quando o profissional perde sua individualidade dentro da organização empresarial",
-        "Registrar-se voluntariamente na Junta Comercial, ainda que continue atuando sozinho",
-        "Emitir mais de 12 notas fiscais por ano"
-      ],
-      correct: 1,
-      exp: "Art. 966, parágrafo único, do CC: o profissional intelectual não é empresário, salvo se o exercício da profissão constituir elemento de empresa — quando sua atuação pessoal se dilui na organização empresarial que passa a explorar a atividade."
-    },
-    {
-      id: "q43",
-      topic: "Teoria da Empresa",
-      q: "Quanto às sociedades, é correto afirmar, segundo o art. 982 do Código Civil, que:",
-      options: [
-        "A sociedade por ações é sempre considerada empresária, independentemente de seu objeto, e a cooperativa é sempre considerada simples, independentemente de seu objeto",
-        "Toda sociedade que exerce atividade rural é obrigatoriamente empresária",
-        "A cooperativa é sempre considerada empresária, por explorar atividade econômica organizada",
-        "A sociedade por ações pode optar livremente por ser simples ou empresária"
-      ],
-      correct: 0,
-      exp: "Art. 982, parágrafo único, do CC: independentemente do objeto, é sempre empresária a sociedade por ações, e sempre simples a cooperativa."
-    },
-    {
-      id: "q44",
-      topic: "Teoria da Empresa",
-      q: "Sobre a distinção entre empresário individual e sócio de sociedade empresária, é correto afirmar que:",
-      options: [
-        "Os sócios de uma sociedade empresária também são, individualmente, empresários",
-        "Os sócios de uma sociedade empresária não são empresários — serão empreendedores ou investidores —, e as regras aplicáveis ao empresário individual não se estendem a eles",
-        "Só existe empresário individual quando a atividade é exercida sem registro",
-        "O empresário individual é sempre sócio de alguma sociedade limitada"
-      ],
-      correct: 1,
-      exp: "Quem exerce a empresa em nome próprio, como pessoa física, é o empresário individual; os sócios de uma sociedade empresária não são empresários (a própria sociedade é que explora a empresa), e sim empreendedores ou investidores, não se lhes aplicando as regras do empresário individual."
-    },
-    {
-      id: "q45",
-      topic: "Teoria da Empresa",
-      q: "Constituem hipóteses de falta de capacidade civil que impedem, em regra, o exercício da empresa como empresário individual:",
-      options: [
-        "Falidos não reabilitados e leiloeiros",
-        "Menores de 18 anos não emancipados, ébrios habituais, viciados em tóxicos, pródigos e aqueles que não podem exprimir vontade",
-        "Advogados e servidores públicos em geral",
-        "Estrangeiros não residentes no Brasil"
-      ],
-      correct: 1,
-      exp: "A falta de capacidade civil protege o próprio incapaz e alcança, entre outros, os menores não emancipados, ébrios habituais, viciados em tóxicos, pródigos e quem não pode exprimir vontade — casos em que, excepcionalmente, a empresa pode ser continuada por meio de representante ou assistente, mediante autorização judicial."
-    },
-    {
-      id: "q46",
-      topic: "Teoria da Empresa",
-      q: "Diferentemente da incapacidade civil, a proibição ao exercício de empresa (ex.: falido não reabilitado, condenado por crime que vede o acesso à atividade empresarial, leiloeiro):",
-      options: [
-        "Também protege o próprio proibido, que é civilmente incapaz",
-        "Recai sobre pessoas plenamente capazes para os atos da vida civil, mas que a lei impede de exercer a atividade empresarial, em proteção a terceiros",
-        "Só pode ser aplicada por decisão da Junta Comercial",
-        "É sempre temporária e cessa automaticamente após 1 ano"
-      ],
-      correct: 1,
-      exp: "Os proibidos de exercer empresa são plenamente capazes para os atos e negócios jurídicos em geral; a vedação legal ao exercício da atividade empresarial visa proteger terceiros, e não o próprio proibido."
-    },
-    {
-      id: "q47",
-      topic: "Teoria da Empresa",
-      q: "O nome empresarial não se confunde com:",
-      options: [
-        "A firma social, que é uma de suas espécies",
-        "A marca, o nome de domínio e o título do estabelecimento",
-        "A denominação social, que é sua outra espécie",
-        "O próprio empresário, do qual é elemento do patrimônio"
-      ],
-      correct: 1,
-      exp: "O nome empresarial (com o qual o empresário se apresenta nas relações econômicas) é distinto da marca (identifica produtos/serviços), do nome de domínio (endereço na internet) e do título do estabelecimento (identifica o local físico)."
-    },
-    {
-      id: "q48",
-      topic: "Teoria da Empresa",
-      q: "Sobre firma e denominação como espécies de nome empresarial, é correto afirmar que:",
-      options: [
-        "A firma, além de identificar o empresário, também serve como sua assinatura; a denominação é exclusivamente elemento de identificação, sem outra função",
-        "Firma e denominação são sinônimos, sem qualquer distinção prática",
-        "Apenas sociedades anônimas podem adotar firma",
-        "A denominação sempre exige o nome civil de um dos sócios"
-      ],
-      correct: 0,
-      exp: "A firma funciona também como assinatura do empresário nos contratos sociais; a denominação, por sua vez, é exclusivamente elemento de identificação do exercente da atividade empresarial, sem função de assinatura."
-    },
-    {
-      id: "q49",
-      topic: "Teoria da Empresa",
-      q: "Sobre a formação do nome empresarial conforme o tipo societário, é correto afirmar que:",
-      options: [
-        "A sociedade anônima só pode adotar firma, nunca denominação",
-        "A sociedade em conta de participação é proibida de adotar nome empresarial, e a sociedade limitada pode adotar firma ou denominação, sempre acompanhada da expressão 'limitada' ou 'Ltda.'",
-        "O empresário individual pode livremente escolher entre firma e denominação",
-        "A sociedade em nome coletivo só pode adotar denominação"
-      ],
-      correct: 1,
-      exp: "A sociedade em conta de participação é proibida de adotar nome empresarial (não tem personalidade jurídica própria perante terceiros); a limitada pode adotar firma ou denominação, mas sempre com a expressão 'limitada' ou 'Ltda.'. Já a S.A. só adota denominação, e o empresário individual só pode adotar firma."
-    },
-    {
-      id: "q50",
-      topic: "Teoria da Empresa",
-      q: "Segundo o princípio da veracidade, aplicável à formação do nome empresarial:",
-      options: [
-        "É proibido ao empresário valer-se, na composição de seu nome, de elementos estranhos ao seu nome civil (ou ao de seus sócios), regra que não se aplica integralmente à denominação da sociedade anônima",
-        "Qualquer expressão de fantasia pode ser livremente utilizada, independentemente do tipo societário",
-        "Aplica-se apenas às sociedades limitadas",
-        "Impede qualquer alteração do nome empresarial ao longo da existência da sociedade"
-      ],
-      correct: 0,
-      exp: "O princípio da veracidade veda o uso, na composição do nome empresarial, de elementos estranhos ao nome civil do empresário ou de seus sócios — mas não se aplica integralmente à denominação da sociedade anônima, que pode homenagear o nome de fundador ou de quem tenha concorrido para o êxito da empresa."
-    },
-    {
-      id: "q51",
-      topic: "Teoria da Empresa",
-      q: "O registro de empresa no Brasil é exercido, no âmbito federal, pelo Departamento de Registro Empresarial e Integração (DREI) e, no âmbito estadual, pelas Juntas Comerciais. A respeito do DREI, é correto afirmar que:",
-      options: [
-        "Realiza diretamente os atos de registro de cada empresa",
-        "Supervisiona e coordena a execução do registro de empresa, fixando diretrizes gerais para as Juntas Comerciais, sem realizar, ele próprio, atos de registro",
-        "É um órgão vinculado exclusivamente ao Poder Judiciário estadual",
-        "Substitui as Juntas Comerciais nos Estados que não as mantêm"
-      ],
-      correct: 1,
-      exp: "O DREI é órgão federal do sistema de registro de empresas em função executiva, mas não realiza, ele mesmo, atos de registro — compete-lhe fixar diretrizes gerais e supervisionar/orientar as Juntas Comerciais, órgãos estaduais que efetivamente executam o registro."
-    },
-    {
-      id: "q52",
-      topic: "Teoria da Empresa",
-      q: "São os três atos do registro de empresa executados pelas Juntas Comerciais:",
-      options: [
-        "Matrícula, arquivamento e autenticação",
-        "Inscrição, baixa e alteração",
-        "Protocolo, exame e homologação",
-        "Registro, averbação e cancelamento"
-      ],
-      correct: 0,
-      exp: "A matrícula é o ato de inscrição de tradutores públicos, intérpretes comerciais, leiloeiros, trapicheiros e administradores de armazéns-gerais; o arquivamento é o registro do empresário (pessoa física ou jurídica); e a autenticação está ligada aos livros comerciais."
-    },
-    {
-      id: "q53",
-      topic: "Teoria da Empresa",
-      q: "É considerada inativa a empresa que não realizar qualquer atividade operacional, patrimonial ou financeira durante todo o ano-calendário. Além disso, aquele que não proceder a qualquer arquivamento no período de:",
-      options: [
-        "1 ano deve comunicar a inatividade à Receita Federal",
-        "10 anos deve comunicar à Junta Comercial que ainda se encontra em atividade, sob pena de também ser considerado inativo, autorizando o cancelamento do registro",
-        "5 anos perde automaticamente a personalidade jurídica",
-        "2 anos deve requerer nova inscrição no CNPJ"
-      ],
-      correct: 1,
-      exp: "Quem não realiza qualquer arquivamento por 10 anos deve comunicar à Junta Comercial que permanece em atividade; a omissão também gera a presunção de inatividade, autorizando o cancelamento do registro e, por consequência, a dissolução irregular."
-    },
-    {
-      id: "q54",
-      topic: "Teoria da Empresa",
-      q: "O empresário que exerce sua atividade sem o devido registro na Junta Comercial (empresário irregular) sofre, entre outras, as seguintes restrições:",
-      options: [
-        "Nenhuma, pois o registro é meramente declaratório e não gera qualquer efeito prático",
-        "Falta de legitimidade ativa para requerer falência de seu devedor e para requerer recuperação judicial, impossibilidade de autenticar seus livros e responsabilidade solidária e ilimitada dos sócios",
-        "Apenas a impossibilidade de emitir notas fiscais",
-        "A automática dissolução da sociedade, independentemente de qualquer procedimento"
-      ],
-      correct: 1,
-      exp: "O registro não é condição para ser considerado empresário (art. 966, CC), mas sua ausência gera restrições relevantes: falta de legitimidade ativa para pedir falência de devedor (art. 97, §1º, LF) e para requerer recuperação judicial (art. 51, V, LF), impossibilidade de autenticação dos livros e responsabilidade solidária e ilimitada dos sócios."
-    },
-    {
-      id: "q55",
-      topic: "Teoria da Empresa",
-      q: "Segundo o princípio do sigilo dos livros empresariais (art. 1.190 do Código Civil):",
-      options: [
-        "Qualquer pessoa pode requerer, sem justificativa, a exibição integral dos livros de um empresário",
-        "Ressalvados os casos previstos em lei, nenhuma autoridade, juiz ou tribunal pode determinar diligência para verificar se o empresário observa, ou não, as formalidades legais em seus livros e fichas",
-        "Os livros empresariais são documentos de acesso público irrestrito",
-        "O sigilo se aplica apenas aos livros facultativos, nunca aos obrigatórios"
-      ],
-      correct: 1,
-      exp: "Art. 1.190 do CC consagra o princípio do sigilo: ressalvadas as exceções legais, nenhuma autoridade pode determinar diligência para fiscalizar se o empresário observa as formalidades legais em seus livros — a exibição judicial (parcial ou total) só ocorre nas hipóteses previstas em lei."
-    },
-    {
-      id: "q56",
-      topic: "Teoria da Empresa",
-      q: "Quanto à natureza jurídica do estabelecimento empresarial, a doutrina o classifica como:",
-      options: [
-        "Universalidade de direito, pois decorre diretamente de imposição legal",
-        "Universalidade de fato, pois resulta da vontade do empresário em reunir, organizadamente, bens materiais e imateriais com vistas a um fim, e não de imposição legal",
-        "Bem imóvel por natureza, equiparado ao imóvel onde a empresa funciona",
-        "Patrimônio autônomo com personalidade jurídica própria, distinta do empresário"
-      ],
-      correct: 1,
-      exp: "O estabelecimento é universalidade de fato: reúne, pela vontade do empresário, bens materiais e imateriais sistematicamente organizados com vistas ao exercício da empresa — diferente da universalidade de direito, que decorre de imposição legal (como a herança)."
-    },
-    {
-      id: "q57",
-      topic: "Teoria da Empresa",
-      q: "O 'aviamento', segundo parte da doutrina, refere-se ao valor agregado que o estabelecimento organizado possui além da soma de seus bens individuais, e não se confunde com:",
-      options: [
-        "A clientela, que é a massa de pessoas que efetivamente contrata com o empresário",
-        "O ponto empresarial",
-        "O fundo de comércio",
-        "A propriedade industrial"
-      ],
-      correct: 0,
-      exp: "Aviamento é o sobrevalor que a organização eficiente do estabelecimento agrega ao conjunto de bens; não se confunde com a clientela, que é o conjunto de pessoas que efetivamente se relacionam com o empresário — o aviamento é causa, a clientela é, entre outros, um de seus efeitos."
-    },
-    {
-      id: "q58",
-      topic: "Teoria da Empresa",
-      q: "Na alienação do estabelecimento empresarial (trespasse), quando não restam no patrimônio do alienante bens suficientes para solver o passivo, a anuência dos credores:",
-      options: [
-        "É sempre dispensável, bastando o registro do contrato na Junta Comercial",
-        "Deve ser colhida por escrito ou, alternativamente, os credores devem ser notificados — presumindo-se a anuência tácita caso permaneçam em silêncio por 30 dias após a notificação (art. 1.145, CC)",
-        "Só pode ser obtida por meio de ação judicial própria",
-        "Deve ser unânime e expressa, não se admitindo anuência tácita em nenhuma hipótese"
-      ],
-      correct: 1,
-      exp: "Art. 1.145 do CC: se não restarem bens suficientes para solver o passivo, a eficácia da alienação do estabelecimento depende do pagamento de todos os credores ou de seu consentimento (expresso ou tácito, presumido pelo silêncio de 30 dias após notificação)."
-    },
-    {
-      id: "q59",
-      topic: "Teoria da Empresa",
-      q: "Para que o locatário empresário tenha direito à ação renovatória de locação empresarial (proteção ao ponto), a Lei de Locações exige, entre outros requisitos:",
-      options: [
-        "Contrato de locação por tempo determinado de, no mínimo, 5 anos (admitida a soma de prazos de contratos sucessivamente renovados) e exploração do mesmo ramo de atividade pelo prazo mínimo e ininterrupto de 3 anos até a propositura da ação",
-        "Contrato por prazo indeterminado e exploração de qualquer ramo de atividade",
-        "Ser o locatário necessariamente sociedade anônima",
-        "Prévia autorização do locador para a propositura da ação"
-      ],
-      correct: 0,
-      exp: "Art. 51 da Lei 8.245/91: exige-se locatário empresário, contrato por tempo determinado de no mínimo 5 anos (podendo somar prazos de renovações sucessivas) e exploração do mesmo ramo de atividade por, no mínimo, 3 anos ininterruptos até a propositura da ação renovatória."
-    },
-    {
-      id: "q60",
-      topic: "Teoria da Empresa",
-      q: "São hipóteses de exceção de retomada, que autorizam o locador a resistir à renovação compulsória da locação empresarial, EXCETO:",
-      options: [
-        "Insuficiência da proposta de renovação apresentada pelo locatário",
-        "Proposta melhor de terceiro",
-        "Reforma substancial no prédio locado ou uso próprio pelo locador",
-        "Simples desejo do locador de aumentar o valor do aluguel, sem qualquer das demais hipóteses legais"
-      ],
-      correct: 3,
-      exp: "A Lei do Inquilinato prevê hipóteses taxativas de exceção de retomada (insuficiência da proposta, proposta melhor de terceiro, reforma substancial, uso próprio, transferência de estabelecimento para ascendente/descendente/cônjuge em ramo diverso); o mero interesse do locador em reajustar o aluguel, isoladamente, não afasta a renovação compulsória."
-    },
-    {
-      id: "q61",
-      topic: "Teoria da Empresa",
-      q: "São bens integrantes da propriedade industrial, protegidos pela Lei nº 9.279/96 e geridos pelo INPI:",
-      options: [
-        "Apenas a marca e a patente de invenção",
-        "A invenção, o modelo de utilidade, o desenho industrial e a marca — além das indicações geográficas, também registradas pelo INPI",
-        "Somente o software e os direitos autorais",
-        "O nome empresarial e o título do estabelecimento"
-      ],
-      correct: 1,
-      exp: "Art. 2º da Lei 9.279/96: a propriedade industrial protege a invenção, o modelo de utilidade, o desenho industrial e a marca; o INPI, autarquia federal, também é responsável pelo registro das indicações geográficas."
-    },
-    {
-      id: "q62",
-      topic: "Teoria da Empresa",
-      q: "Conforme o art. 122 da Lei 9.279/96, são suscetíveis de registro como marca:",
-      options: [
-        "Quaisquer sinais distintivos, incluindo olfativos, gustativos e sonoros",
-        "Apenas sinais distintivos visualmente perceptíveis, não compreendidos nas proibições legais — sendo vedado o registro de marcas olfativas, gustativas ou sonoras",
-        "Somente palavras, sendo vedado o registro de logotipos ou figuras",
-        "Apenas sinais tridimensionais"
-      ],
-      correct: 1,
-      exp: "Art. 122 da LPI: são registráveis como marca os sinais distintivos visualmente perceptíveis — por isso é vedado o registro de marcas olfativas, gustativas ou sonoras, já que a marca deve identificar produtos e serviços visualmente."
-    },
-    {
-      id: "q63",
-      topic: "Teoria da Empresa",
-      q: "Sobre a distinção entre marca coletiva e marca de certificação (art. 128, §§2º e 3º, da Lei 9.279/96):",
-      options: [
-        "Ambas têm sempre o mesmo titular: uma associação empresarial",
-        "Na marca coletiva, o titular é sempre uma associação (entidade sindical ou não) que congrega os empresários; na marca de certificação, o titular é um agente econômico que avalia e controla a produção de outros, sem poder ter interesse comercial direto no produto ou serviço certificado",
-        "A marca de certificação só pode ser registrada por órgãos públicos",
-        "A marca coletiva nunca pode ser registrada por sindicatos"
-      ],
-      correct: 1,
-      exp: "Na marca coletiva, o titular é uma associação que reúne empresários de determinado produto, região ou ideologia; na marca de certificação, o titular é um agente que avalia/controla a produção de terceiros, sem poder ter interesse comercial ou industrial direto no produto certificado."
-    }
-  ];
-
-  // banco de perguntas ativo (pode ser sobrescrito pelo professor)
-  var quizData = DEFAULT_QUESTIONS.slice();
-  var QUESTIONS_KEY = 'questions:bank';
+  // banco de perguntas ativo na tela do quiz (carregado por turma do Supabase)
+  var quizData = [];
 
   // ---------- conexão com o backend Supabase ----------
   var SUPABASE_URL = 'https://wrwtbybnwivrmtrebctp.supabase.co';
@@ -1857,7 +1049,7 @@
   }
 
   function questionFromRow(row){
-    return { id: row.id, topic: row.topic, q: row.question, options: row.options, correct: row.correct_index, exp: row.explanation };
+    return { id: row.id, turma: row.turma, topic: row.topic, q: row.question, options: row.options, correct: row.correct_index, exp: row.explanation };
   }
 
   function shuffledIndices(n){
@@ -1900,6 +1092,8 @@
     registerForm: document.getElementById('register-form'),
     regName: document.getElementById('reg-name'),
     regEmail: document.getElementById('reg-email'),
+    regTurma: document.getElementById('reg-turma'),
+    fieldTurma: document.getElementById('field-turma'),
     fieldName: document.getElementById('field-name'),
     fieldEmail: document.getElementById('field-email'),
     btnStart: document.getElementById('btn-start'),
@@ -1947,12 +1141,15 @@
     tabBtnPerguntas: document.getElementById('tab-btn-perguntas'),
     tabNotas: document.getElementById('tab-notas'),
     tabPerguntas: document.getElementById('tab-perguntas'),
+    turmaBtn4: document.getElementById('turma-btn-4'),
+    turmaBtn6: document.getElementById('turma-btn-6'),
     questionSearch: document.getElementById('question-search'),
     btnNewQuestion: document.getElementById('btn-new-question'),
     btnResetQuestions: document.getElementById('btn-reset-questions'),
     questionCountHint: document.getElementById('question-count-hint'),
     questionFormWrap: document.getElementById('question-form-wrap'),
     qfId: document.getElementById('qf-id'),
+    qfTurma: document.getElementById('qf-turma'),
     qfTopic: document.getElementById('qf-topic'),
     qfQuestion: document.getElementById('qf-question'),
     qfOptions: document.getElementById('qf-options'),
@@ -1963,40 +1160,34 @@
     questionList: document.getElementById('question-list')
   };
 
-  els.qTotal.textContent = quizData.length;
+  els.qTotal.textContent = 0;
 
-  // ---------- banco de perguntas (carregado do painel do professor, se existir) ----------
-  function loadQuestionBank(){
-    return sbRest('/quiz_questions?select=*&order=sort_order.asc').then(function(res){
+  // ---------- banco de perguntas por turma (carregado do Supabase) ----------
+  function loadQuestionBank(turma){
+    if(turma !== '4' && turma !== '6') return Promise.resolve([]);
+    return sbRest('/quiz_questions?turma=eq.' + turma + '&select=*&order=sort_order.asc').then(function(res){
       if(!res.ok) throw new Error('rest_error');
       return res.json();
     }).then(function(rows){
-      if(Array.isArray(rows) && rows.length > 0) return rows.map(questionFromRow);
-      return DEFAULT_QUESTIONS.slice();
+      return Array.isArray(rows) ? rows.map(questionFromRow) : [];
     }).catch(function(){
-      return DEFAULT_QUESTIONS.slice();
+      return [];
     });
   }
 
-  // Observação: a escrita no banco de questões (criar/editar/excluir/resetar)
+  // Observação: a escrita no banco de questões (criar/editar/excluir/esvaziar)
   // é feita direto pelas funções do painel do professor via teacherCall(),
   // que exige a senha e passa pela Edge Function "teacher" (service role).
-  // saveQuestionBank fica apenas como recarregar o banco após uma escrita.
-  function saveQuestionBank(){
-    return loadQuestionBank().then(function(list){
+  // saveQuestionBank fica apenas como recarregar o banco de uma turma após uma escrita.
+  function saveQuestionBank(turma){
+    return loadQuestionBank(turma).then(function(list){
       quizData = list;
       return list;
     });
   }
 
-  var bankReady = loadQuestionBank().then(function(list){
-    quizData = list;
-    els.qTotal.textContent = quizData.length;
-    return quizData;
-  });
-
-  // ---------- identidade do aluno (nome + e-mail institucional) ----------
-  var student = { name: '', email: '' };
+  // ---------- identidade do aluno (nome + e-mail institucional + turma) ----------
+  var student = { name: '', email: '', turma: '' };
 
   // Defina aqui um domínio institucional para exigir (ex.: '@unifenas.br').
   // Deixe como '' para aceitar qualquer e-mail com formato válido.
@@ -2193,6 +1384,7 @@
     saveAttempt({
       name: student.name,
       email: student.email,
+      turma: student.turma,
       correct: state.correct,
       total: quizData.length,
       score: state.score,
@@ -2216,28 +1408,39 @@
     e.preventDefault();
     var name = els.regName.value.trim();
     var email = els.regEmail.value.trim();
+    var turma = els.regTurma.value;
     var nameOk = name.length >= 3;
     var emailOk = EMAIL_RE.test(email) && (!INSTITUTIONAL_DOMAIN || email.toLowerCase().indexOf(INSTITUTIONAL_DOMAIN.toLowerCase()) > -1);
+    var turmaOk = turma === '4' || turma === '6';
 
     setFieldError(els.fieldName, !nameOk);
     setFieldError(els.fieldEmail, !emailOk);
-    if(!nameOk || !emailOk) return;
+    setFieldError(els.fieldTurma, !turmaOk);
+    if(!nameOk || !emailOk || !turmaOk) return;
 
     student.name = name;
     student.email = email;
+    student.turma = turma;
     showScreen('intro');
   });
 
   els.regName.addEventListener('input', function(){ setFieldError(els.fieldName, false); });
   els.regEmail.addEventListener('input', function(){ setFieldError(els.fieldEmail, false); });
+  els.regTurma.addEventListener('change', function(){ setFieldError(els.fieldTurma, false); });
 
   els.btnStart.addEventListener('click', function(){
     els.btnStart.disabled = true;
     var originalLabel = els.btnStart.textContent;
     els.btnStart.textContent = 'Abrindo o processo...';
-    bankReady.then(function(){
+    loadQuestionBank(student.turma).then(function(list){
+      quizData = list;
+      els.qTotal.textContent = quizData.length;
       els.btnStart.disabled = false;
       els.btnStart.textContent = originalLabel;
+      if(quizData.length === 0){
+        showToast('Nenhuma pergunta cadastrada para esta turma ainda.');
+        return;
+      }
       startQuiz();
     });
   });
@@ -2246,8 +1449,10 @@
     els.registerForm.reset();
     setFieldError(els.fieldName, false);
     setFieldError(els.fieldEmail, false);
+    setFieldError(els.fieldTurma, false);
     els.regName.value = student.name;
     els.regEmail.value = student.email;
+    els.regTurma.value = student.turma;
   });
 
   // ---------- persistência (painel do professor) ----------
@@ -2263,6 +1468,7 @@
       body: {
         student_name: attempt.name,
         student_email: attempt.email,
+        turma: attempt.turma,
         correct: attempt.correct,
         total: attempt.total,
         score: attempt.score,
@@ -2296,6 +1502,7 @@
     return {
       name: row.student_name,
       email: row.student_email,
+      turma: row.turma,
       correct: row.correct,
       total: row.total,
       score: row.score,
@@ -2306,10 +1513,12 @@
     };
   }
 
+  var activeTurma = '4';
+
   function loadAttempts(){
     els.rosterBody.innerHTML = '<tr><td colspan="7" style="text-align:center; opacity:0.7; font-family:var(--mono); font-size:0.8rem;">Carregando...</td></tr>';
     els.rosterEmpty.style.display = 'none';
-    teacherCall('list_attempts').then(function(res){
+    teacherCall('list_attempts', { turma: activeTurma }).then(function(res){
       if(!res.ok){
         els.rosterBody.innerHTML = '';
         els.rosterEmpty.style.display = 'block';
@@ -2417,8 +1626,10 @@
         teacherPassword = attemptedPassword;
         els.teacherGate.style.display = 'none';
         els.teacherDashboard.style.display = 'block';
+        activeTurma = '4';
+        els.turmaBtn4.classList.add('active');
+        els.turmaBtn6.classList.remove('active');
         switchTeacherTab('notas');
-        loadAttempts();
       }else{
         teacherPassword = '';
         setFieldError(els.fieldTeacherPass, true);
@@ -2445,6 +1656,29 @@
   // ---------- gerenciamento de perguntas (CRUD) ----------
   var OPTION_LETTERS = ['A','B','C','D'];
   var qfEditingId = null;
+  var teacherQuestions = [];
+
+  function refreshActiveTab(){
+    var isNotas = els.tabNotas.style.display !== 'none';
+    if(isNotas){
+      loadAttempts();
+    }else{
+      loadQuestionBank(activeTurma).then(function(list){
+        teacherQuestions = list;
+        renderQuestionManager();
+      });
+    }
+  }
+
+  function setActiveTurma(turma){
+    activeTurma = turma;
+    els.turmaBtn4.classList.toggle('active', turma === '4');
+    els.turmaBtn6.classList.toggle('active', turma === '6');
+    hideQuestionForm();
+    refreshActiveTab();
+  }
+  els.turmaBtn4.addEventListener('click', function(){ setActiveTurma('4'); });
+  els.turmaBtn6.addEventListener('click', function(){ setActiveTurma('6'); });
 
   function switchTeacherTab(tab){
     var isNotas = tab === 'notas';
@@ -2452,10 +1686,8 @@
     els.tabPerguntas.style.display = isNotas ? 'none' : 'block';
     els.tabBtnNotas.classList.toggle('active', isNotas);
     els.tabBtnPerguntas.classList.toggle('active', !isNotas);
-    if(!isNotas){
-      hideQuestionForm();
-      bankReady.then(renderQuestionManager);
-    }
+    hideQuestionForm();
+    refreshActiveTab();
   }
   els.tabBtnNotas.addEventListener('click', function(){ switchTeacherTab('notas'); });
   els.tabBtnPerguntas.addEventListener('click', function(){ switchTeacherTab('perguntas'); });
@@ -2464,14 +1696,15 @@
 
   function renderQuestionManager(){
     var q = (els.questionSearch.value || '').trim().toLowerCase();
-    var list = quizData.filter(function(item){
+    var list = teacherQuestions.filter(function(item){
       if(!q) return true;
       return (item.topic||'').toLowerCase().indexOf(q) > -1 || (item.q||'').toLowerCase().indexOf(q) > -1;
     });
-    els.questionCountHint.textContent = quizData.length + ' pergunta(s) no banco atual' + (q ? (' — ' + list.length + ' encontrada(s)') : '') + '. Alterações valem para todos os alunos que abrirem o quiz.';
+    var turmaLabel = activeTurma === '4' ? '4° período' : '6° período';
+    els.questionCountHint.textContent = teacherQuestions.length + ' pergunta(s) no banco da turma ' + turmaLabel + (q ? (' — ' + list.length + ' encontrada(s)') : '') + '.';
 
     if(list.length === 0){
-      els.questionList.innerHTML = '<p class="roster-empty">Nenhuma pergunta encontrada.</p>';
+      els.questionList.innerHTML = '<p class="roster-empty">Nenhuma pergunta cadastrada ainda para esta turma.</p>';
       return;
     }
     els.questionList.innerHTML = list.map(function(item){
@@ -2490,18 +1723,18 @@
     els.questionList.querySelectorAll('.q-edit-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
         var id = btn.closest('.qrow').getAttribute('data-id');
-        var item = quizData.filter(function(q){ return q.id === id; })[0];
+        var item = teacherQuestions.filter(function(q){ return q.id === id; })[0];
         if(item) openQuestionForm(item);
       });
     });
     els.questionList.querySelectorAll('.q-del-btn').forEach(function(btn){
       btn.addEventListener('click', function(){
         var id = btn.closest('.qrow').getAttribute('data-id');
-        if(!window.confirm('Excluir esta pergunta do banco? Essa ação vale para todos os alunos.')) return;
+        if(!window.confirm('Excluir esta pergunta do banco? Essa ação vale para todos os alunos desta turma.')) return;
         teacherCall('delete_question', { id: id }).then(function(res){
           if(!res.ok){ showToast('Não foi possível excluir a pergunta.'); return; }
-          return saveQuestionBank().then(function(){
-            els.qTotal.textContent = quizData.length;
+          return saveQuestionBank(activeTurma).then(function(list){
+            teacherQuestions = list;
             renderQuestionManager();
           });
         });
@@ -2524,6 +1757,7 @@
   function openQuestionForm(item){
     qfEditingId = item ? item.id : null;
     els.qfId.value = qfEditingId || '';
+    els.qfTurma.value = item ? item.turma : activeTurma;
     els.qfTopic.value = item ? item.topic : '';
     els.qfQuestion.value = item ? item.q : '';
     els.qfExp.value = item ? item.exp : '';
@@ -2543,6 +1777,7 @@
   els.questionSearch.addEventListener('input', renderQuestionManager);
 
   els.btnSaveQuestion.addEventListener('click', function(){
+    var turma = els.qfTurma.value;
     var topic = els.qfTopic.value.trim();
     var qText = els.qfQuestion.value.trim();
     var expText = els.qfExp.value.trim();
@@ -2552,7 +1787,7 @@
     var correct = correctRadio ? parseInt(correctRadio.value, 10) : -1;
 
     var allOptionsFilled = options.every(function(o){ return o.length > 0; });
-    var valid = topic && qText && expText && allOptionsFilled && correct >= 0;
+    var valid = (turma === '4' || turma === '6') && topic && qText && expText && allOptionsFilled && correct >= 0;
     if(!valid){
       els.qfErr.style.display = 'block';
       return;
@@ -2561,6 +1796,7 @@
 
     var questionPayload = {
       id: qfEditingId || undefined,
+      turma: turma,
       topic: topic,
       question: qText,
       options: options,
@@ -2573,21 +1809,27 @@
         els.qfErr.style.display = 'block';
         return;
       }
-      return saveQuestionBank().then(function(){
-        els.qTotal.textContent = quizData.length;
-        hideQuestionForm();
-        renderQuestionManager();
-      });
+      hideQuestionForm();
+      // se a pergunta foi salva para a turma que não está em foco, muda o foco pra ela
+      if(turma !== activeTurma){
+        setActiveTurma(turma);
+      }else{
+        return saveQuestionBank(activeTurma).then(function(list){
+          teacherQuestions = list;
+          renderQuestionManager();
+        });
+      }
     });
   });
 
   els.btnResetQuestions.addEventListener('click', function(){
-    if(!window.confirm('Restaurar o banco de perguntas para a versão original do curso? Todas as edições e perguntas adicionadas pelo professor serão perdidas.')) return;
-    teacherCall('reset_questions', { defaults: DEFAULT_QUESTIONS }).then(function(res){
-      if(!res.ok){ showToast('Não foi possível restaurar o banco de perguntas.'); return; }
+    var turmaLabel = activeTurma === '4' ? '4° período' : '6° período';
+    if(!window.confirm('Esvaziar TODO o banco de perguntas da turma ' + turmaLabel + '? Essa ação não pode ser desfeita.')) return;
+    teacherCall('clear_questions', { turma: activeTurma }).then(function(res){
+      if(!res.ok){ showToast('Não foi possível esvaziar o banco de perguntas.'); return; }
       hideQuestionForm();
-      return saveQuestionBank().then(function(){
-        els.qTotal.textContent = quizData.length;
+      return saveQuestionBank(activeTurma).then(function(list){
+        teacherQuestions = list;
         renderQuestionManager();
       });
     });
