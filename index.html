@@ -864,41 +864,6 @@
   .doc-stack:hover .doc-spotlight{opacity:1;}
   .doc > *:not(.doc-spotlight){position:relative; z-index:1;}
 
-  /* ===== cursor customizado — ponto + anel com atraso + rastro de tinta ===== */
-  .has-custom-cursor, .has-custom-cursor *{cursor:none !important;}
-
-  .cursor-dot, .cursor-ring{
-    position:fixed; top:0; left:0;
-    pointer-events:none;
-    z-index:9999;
-    opacity:0;
-    transition:opacity .25s ease;
-  }
-  .cursor-dot.visible, .cursor-ring.visible{opacity:1;}
-
-  .cursor-dot{
-    width:5px; height:5px;
-    border-radius:50%;
-    background:#000;
-    transform:translate(-50%,-50%);
-    transition:opacity .25s ease, transform .15s ease;
-  }
-
-  .cursor-ring{
-    width:26px; height:26px;
-    border-radius:50%;
-    border:1px solid rgba(0,0,0,0.55);
-    transform:translate(-50%,-50%) scale(1);
-    transition:opacity .25s ease, width .25s cubic-bezier(.2,.8,.3,1), height .25s cubic-bezier(.2,.8,.3,1), border-color .2s ease, transform .2s ease;
-  }
-  .cursor-ring.cursor-press{transform:translate(-50%,-50%) scale(0.85);}
-  /* hover em algo clicável: o anel só cresce e escurece um pouco — sem virar forma nova */
-  .cursor-ring.cursor-hover{
-    width:34px; height:34px;
-    border-color:#000;
-  }
-  .cursor-dot.cursor-hover{opacity:0;}
-
   @media (prefers-reduced-motion: reduce){
     .judge-stage{transition:none;}
   }
@@ -1351,8 +1316,6 @@
 </div>
 <div class="taunt" id="taunt" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
-<div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
-<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
 <canvas id="confetti"></canvas>
 
 <script>
@@ -1494,8 +1457,6 @@
     judgeStage: document.getElementById('judge-stage'),
     pupilL: document.getElementById('pupil-l'),
     pupilR: document.getElementById('pupil-r'),
-    cursorDot: document.getElementById('cursor-dot'),
-    cursorRing: document.getElementById('cursor-ring'),
     taunt: document.getElementById('taunt'),
     toast: document.getElementById('toast'),
     resultEyebrow: document.getElementById('result-eyebrow'),
@@ -2501,7 +2462,6 @@
 
   // ---------- personalidade e efeitos: paralaxe do juiz, olhos, spotlight e cursor ----------
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  var fineCursor = window.matchMedia('(pointer: fine)').matches;
 
   if(!reducedMotion){
     var rafPending = false;
@@ -2587,50 +2547,6 @@
       requestAnimationFrame(tickAmbient);
     }
     requestAnimationFrame(tickAmbient);
-  }
-
-  // ---------- cursor customizado: ponto + anel com atraso, minimalista ----------
-  if(fineCursor && !reducedMotion){
-    document.documentElement.classList.add('has-custom-cursor');
-    var cx = window.innerWidth/2, cy = window.innerHeight/2;
-    var dotX = cx, dotY = cy, ringX = cx, ringY = cy;
-    els.cursorDot.classList.add('visible');
-    els.cursorRing.classList.add('visible');
-
-    document.addEventListener('mousemove', function(e){
-      cx = e.clientX; cy = e.clientY;
-    });
-
-    (function animateCursor(){
-      dotX += (cx - dotX) * 0.55;
-      dotY += (cy - dotY) * 0.55;
-      ringX += (cx - ringX) * 0.16;
-      ringY += (cy - ringY) * 0.16;
-      els.cursorDot.style.transform = 'translate(' + dotX.toFixed(1) + 'px,' + dotY.toFixed(1) + 'px) translate(-50%,-50%)';
-      els.cursorRing.style.left = ringX.toFixed(1) + 'px';
-      els.cursorRing.style.top = ringY.toFixed(1) + 'px';
-      requestAnimationFrame(animateCursor);
-    })();
-
-    document.addEventListener('mousedown', function(){
-      els.cursorRing.classList.add('cursor-press');
-    });
-    document.addEventListener('mouseup', function(){
-      els.cursorRing.classList.remove('cursor-press');
-    });
-
-    document.addEventListener('mouseover', function(e){
-      if(e.target.closest('button, a, input, select, textarea, .option')){
-        els.cursorRing.classList.add('cursor-hover');
-        els.cursorDot.classList.add('cursor-hover');
-      }
-    });
-    document.addEventListener('mouseout', function(e){
-      if(e.target.closest('button, a, input, select, textarea, .option')){
-        els.cursorRing.classList.remove('cursor-hover');
-        els.cursorDot.classList.remove('cursor-hover');
-      }
-    });
   }
 
 })();
