@@ -278,9 +278,40 @@
     color:#dfe4fb;
   }
   .stat .val{font-weight:700; color:var(--gold-light);}
-  .lives{display:flex; gap:4px;}
-  .lives span{font-size:1.1rem; filter:grayscale(0); transition:filter .3s, opacity .3s;}
-  .lives span.lost{filter:grayscale(1); opacity:0.25;}
+  .lives{display:flex; align-items:center; gap:8px;}
+  .lives .lives-icon{font-size:1rem; flex:none;}
+  .lives .lives-count{font-family:var(--mono); font-weight:700; color:var(--gold-light); font-size:0.85rem; flex:none;}
+  .lives-bar{display:flex; gap:2.5px; flex:none;}
+  .lives-bar .seg{
+    width:7px; height:14px; border-radius:1.5px;
+    background:linear-gradient(180deg, var(--stamp-green), var(--stamp-green-dark));
+    transition:background .25s ease, opacity .25s ease, transform .25s ease;
+  }
+  .lives-bar .seg.warn{background:linear-gradient(180deg,#e3c063,#b98a24);}
+  .lives-bar .seg.danger{background:linear-gradient(180deg,#e2564a,var(--stamp-red-dark));}
+  .lives-bar .seg.lost{background:rgba(255,255,255,0.12); transform:scaleY(0.55);}
+
+  .score-popup{
+    position:absolute;
+    left:50%; top:-6px;
+    transform:translate(-50%,0);
+    font-family:var(--mono); font-weight:700; font-size:0.8rem;
+    white-space:nowrap;
+    padding:3px 9px;
+    border-radius:20px;
+    pointer-events:none;
+    animation:scorePop 1.1s ease-out forwards;
+    z-index:5;
+  }
+  .score-popup.pos{color:#eafff2; background:rgba(44,107,73,0.9);}
+  .score-popup.neg{color:#ffe9e6; background:rgba(124,36,29,0.9);}
+  .score-popup .brk{display:block; font-weight:500; font-size:0.62rem; opacity:0.85; margin-top:1px;}
+  @keyframes scorePop{
+    0%{opacity:0; transform:translate(-50%,4px) scale(0.85);}
+    18%{opacity:1; transform:translate(-50%,-14px) scale(1);}
+    75%{opacity:1; transform:translate(-50%,-30px) scale(1);}
+    100%{opacity:0; transform:translate(-50%,-42px) scale(0.96);}
+  }
 
   .progress-track{
     height:6px; width:100%;
@@ -546,6 +577,39 @@
   .result-stats .lbl{font-size:0.68rem; opacity:0.75;}
   .result-actions{display:flex; gap:12px; flex-wrap:wrap;}
 
+  .rank-row{
+    display:flex; align-items:center; gap:14px;
+    padding:12px 14px;
+    border-radius:4px;
+    margin-bottom:8px;
+    background:rgba(0,0,0,0.05);
+    font-family:var(--serif);
+  }
+  .rank-row .pos{
+    font-family:var(--mono); font-weight:700; font-size:0.95rem;
+    width:26px; text-align:center; flex:none; color:var(--ink-3);
+  }
+  .rank-row.top1{background:linear-gradient(90deg, rgba(227,192,99,0.28), rgba(227,192,99,0.06));}
+  .rank-row.top1 .pos{color:#8a681f; font-size:1.1rem;}
+  .rank-row.top2{background:rgba(0,0,0,0.07);}
+  .rank-row.top3{background:rgba(165,52,43,0.08);}
+  .rank-row .rname{flex:1; font-weight:600; min-width:0;}
+  .rank-row .rmeta{
+    font-family:var(--mono); font-size:0.78rem; text-align:right; flex:none;
+    color:var(--stamp-red-dark);
+  }
+  .rank-row .rmeta .rscore{display:block; font-weight:700; font-size:0.92rem; color:var(--ink-text);}
+
+  .error-row{
+    border-bottom:1px solid rgba(0,0,0,0.1);
+    padding:12px 4px;
+    display:flex; justify-content:space-between; align-items:flex-start; gap:14px;
+  }
+  .error-row-main{flex:1; min-width:0;}
+  .error-row .qrow-topic{font-family:var(--mono); font-size:0.68rem; color:var(--stamp-red-dark); margin-bottom:3px;}
+  .error-row .qrow-text{font-size:0.9rem; line-height:1.4;}
+  .error-row-meta{flex:none; text-align:right; font-family:var(--mono); font-size:0.7rem; opacity:0.75;}
+
   /* ===== identificação (registro) ===== */
   .field{margin-bottom:18px;}
   .field label{
@@ -750,28 +814,40 @@
   .doc-stack:hover .doc-spotlight{opacity:1;}
   .doc > *:not(.doc-spotlight){position:relative; z-index:1;}
 
-  /* ===== cursor customizado (morphing) — só em ponteiros de precisão ===== */
+  /* ===== cursor customizado — ponto + anel com atraso + rastro de tinta ===== */
   .has-custom-cursor, .has-custom-cursor *{cursor:none !important;}
-  .cursor-dot{
+
+  .cursor-dot, .cursor-ring{
     position:fixed; top:0; left:0;
-    width:16px; height:16px;
-    border-radius:50%;
-    background:var(--gold-light);
-    mix-blend-mode:difference;
     pointer-events:none;
     z-index:9999;
-    transform:translate(-50%,-50%);
-    transition:width .22s cubic-bezier(.2,.8,.3,1), height .22s cubic-bezier(.2,.8,.3,1), border-radius .22s ease, background .2s ease, opacity .2s ease;
     opacity:0;
+    transition:opacity .25s ease;
   }
-  .cursor-dot.visible{opacity:1;}
-  .cursor-dot.cursor-hover{
-    width:46px; height:46px;
-    background:transparent;
-    border:1.5px solid var(--gold-light);
-    border-radius:30% 70% 65% 35%/40% 45% 55% 60%;
+  .cursor-dot.visible, .cursor-ring.visible{opacity:1;}
+
+  .cursor-dot{
+    width:5px; height:5px;
+    border-radius:50%;
+    background:#000;
+    transform:translate(-50%,-50%);
+    transition:opacity .25s ease, transform .15s ease;
   }
-  .cursor-dot.cursor-press{width:12px; height:12px;}
+
+  .cursor-ring{
+    width:26px; height:26px;
+    border-radius:50%;
+    border:1px solid rgba(0,0,0,0.55);
+    transform:translate(-50%,-50%) scale(1);
+    transition:opacity .25s ease, width .25s cubic-bezier(.2,.8,.3,1), height .25s cubic-bezier(.2,.8,.3,1), border-color .2s ease, transform .2s ease;
+  }
+  .cursor-ring.cursor-press{transform:translate(-50%,-50%) scale(0.85);}
+  /* hover em algo clicável: o anel só cresce e escurece um pouco — sem virar forma nova */
+  .cursor-ring.cursor-hover{
+    width:34px; height:34px;
+    border-color:#000;
+  }
+  .cursor-dot.cursor-hover{opacity:0;}
 
   @media (prefers-reduced-motion: reduce){
     .judge-stage{transition:none;}
@@ -874,8 +950,8 @@
       </p>
       <ul class="rules-list">
         <li><span class="ic">📜</span> Feito individual — este processo corre em segredo de justiça, vedada a consulta a colegas, apostilas ou inteligências artificiais.</li>
-        <li><span class="ic">⏱️</span> Cada questão tem 30 segundos. Estourou o prazo, o juiz decide por você (e raramente é a seu favor).</li>
-        <li><span class="ic">❤️</span> Você tem 3 recursos (chances). Errar consome um recurso — zerou, o processo é julgado à revelia.</li>
+        <li><span class="ic">⏱️</span> Cada questão tem 45 segundos. Estourou o prazo, o juiz decide por você (e raramente é a seu favor).</li>
+        <li><span class="ic">❤️</span> Você tem 10 recursos (chances). Errar consome um recurso — zerou, o processo é julgado à revelia.</li>
         <li><span class="ic">🏅</span> Acertos em sequência valem bônus e podem render uma promoção de patente ao final.</li>
       </ul>
       <button class="btn gold" id="btn-start">Abrir o processo →</button>
@@ -889,12 +965,14 @@
     <div class="hud">
       <div class="hud-group">
         <div class="stat">Processo <span class="val" id="q-index">1</span>/<span id="q-total">14</span></div>
-        <div class="stat">🪙 Honorários: <span class="val" id="score-val">0</span></div>
+        <div class="stat" id="score-stat" style="position:relative;">🪙 Honorários: <span class="val" id="score-val">0</span></div>
       </div>
       <div class="hud-group">
         <div class="stat">🔥 <span class="val" id="streak-val">0</span></div>
         <div class="lives" id="lives-box">
-          <span>❤️</span><span>❤️</span><span>❤️</span>
+          <span class="lives-icon">❤️</span>
+          <span class="lives-count"><span id="lives-count-val">10</span>/10</span>
+          <div class="lives-bar" id="lives-bar"></div>
         </div>
       </div>
     </div>
@@ -941,7 +1019,24 @@
       <p id="result-saved" style="font-family:var(--mono); font-size:0.72rem; opacity:0.65; margin:0 0 22px;"></p>
       <div class="result-actions" style="justify-content:center;">
         <button class="btn gold" id="btn-restart">Recorrer da sentença (refazer)</button>
+        <button class="btn" id="btn-view-ranking">🏆 Ver ranking da turma</button>
       </div>
+    </div>
+    </div>
+  </section>
+
+  <!-- RANKING DA TURMA -->
+  <section id="screen-ranking" class="screen">
+    <div class="doc-stack">
+    <div class="doc">
+      <div class="clip"></div>
+      <div class="doc-spotlight" aria-hidden="true"></div>
+      <p class="intro-eyebrow">Placar do fórum</p>
+      <h1 class="intro-title" style="font-size:1.9rem;">Ranking da turma</h1>
+      <p class="ementa" id="ranking-subtitle" style="max-width:100%;">Os honorários mais altos já arrecadados nesta turma.</p>
+      <div id="ranking-list"></div>
+      <p class="roster-empty" id="ranking-empty" style="display:none;">Ainda não há ninguém no ranking desta turma. Seja o primeiro a abrir um processo!</p>
+      <div class="teacher-link"><button type="button" id="btn-back-from-ranking">← Voltar</button></div>
     </div>
     </div>
   </section>
@@ -983,6 +1078,7 @@
         <div class="tabs-row">
           <button class="btn small tab-btn active" id="tab-btn-notas" type="button">📋 Notas da turma</button>
           <button class="btn small tab-btn" id="tab-btn-perguntas" type="button">📝 Perguntas do quiz</button>
+          <button class="btn small tab-btn" id="tab-btn-erros" type="button">❗ Questões com mais erro</button>
         </div>
 
         <div class="tabs-row" style="margin-top:10px;">
@@ -1060,6 +1156,13 @@
 
           <div id="question-list"></div>
         </div>
+
+        <!-- ABA QUESTÕES COM MAIS ERRO -->
+        <div id="tab-erros" style="display:none;">
+          <p class="hint" style="margin:16px 0 14px;">Perguntas ordenadas pela taxa de erro entre os alunos desta turma. Útil pra saber o que reforçar na próxima aula — não mostra quem errou, só o quanto a pergunta em si derruba a turma.</p>
+          <button class="btn small" id="btn-refresh-errors" style="margin-bottom:14px;">↻ Atualizar</button>
+          <div id="error-stats-list"></div>
+        </div>
       </div>
 
     </div>
@@ -1103,6 +1206,11 @@
         <stop offset="0.5" stop-color="#e3c063"/>
         <stop offset="1" stop-color="#8a681f"/>
       </radialGradient>
+      <linearGradient id="hairGrad" x1="0.1" y1="0" x2="0.9" y2="1">
+        <stop offset="0" stop-color="#eef0f3"/>
+        <stop offset="0.5" stop-color="#b6bcc7"/>
+        <stop offset="1" stop-color="#7d8493"/>
+      </linearGradient>
     </defs>
 
     <!-- halo de luz ambiente atrás da figura -->
@@ -1142,36 +1250,47 @@
     <!-- cabeca -->
     <ellipse cx="100" cy="82" rx="38" ry="42" fill="url(#skinGrad)"/>
     <ellipse cx="82" cy="72" rx="12" ry="8" fill="#fff" opacity="0.18"/>
-    <!-- touca / peruca de juiz -->
-    <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78 C138 55 122 44 100 44 C78 44 62 55 62 78 Z" fill="#12162e"/>
-    <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78" fill="none" stroke="#3b4374" stroke-width="2" opacity="0.6"/>
-    <path d="M64 55 Q100 40 136 55" fill="none" stroke="#3b4374" stroke-width="1.4" opacity="0.5"/>
-    <!-- cachos laterais da peruca -->
-    <ellipse cx="60" cy="88" rx="8" ry="16" fill="#12162e"/>
-    <ellipse cx="140" cy="88" rx="8" ry="16" fill="#12162e"/>
+
+    <!-- bochechas coradas -->
+    <ellipse cx="76" cy="95" rx="8.5" ry="5.5" fill="#e8828a" opacity="0.35"/>
+    <ellipse cx="124" cy="95" rx="8.5" ry="5.5" fill="#e8828a" opacity="0.35"/>
+
+    <!-- cabelo grisalho, penteado de lado (sem cachos) -->
+    <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78 C138 55 122 44 100 44 C78 44 62 55 62 78 Z" fill="url(#hairGrad)"/>
+    <!-- franja varrida para o lado -->
+    <path d="M64 44 C78 34 96 30 112 36 C123 40 131 47 136 56 C122 45 104 39 88 41 C79 42 71 43 64 44 Z" fill="url(#hairGrad)" opacity="0.95"/>
+    <!-- costeletas curtas -->
+    <path d="M62 66 C58 74 58 83 62 89 C64 83 64 75 66 69 Z" fill="url(#hairGrad)"/>
+    <path d="M138 66 C142 74 142 83 138 89 C136 83 136 75 134 69 Z" fill="url(#hairGrad)"/>
+    <!-- mechas de brilho -->
+    <path d="M70 30 Q85 21 100 25" stroke="#f5f6f8" stroke-width="1.4" fill="none" opacity="0.65" stroke-linecap="round"/>
+    <path d="M96 24 Q113 20 128 30" stroke="#f5f6f8" stroke-width="1.4" fill="none" opacity="0.55" stroke-linecap="round"/>
+    <path d="M112 30 Q125 35 134 45" stroke="#6b7280" stroke-width="1.4" fill="none" opacity="0.45" stroke-linecap="round"/>
 
     <!-- olhos: esclera + iris/pupila (movida via JS) -->
-    <ellipse cx="85" cy="82" rx="6.4" ry="6.8" fill="#f4efe1"/>
-    <ellipse cx="115" cy="82" rx="6.4" ry="6.8" fill="#f4efe1"/>
-    <circle id="pupil-l" class="pupil" cx="85" cy="82" r="3.6" fill="#241c14"/>
-    <circle id="pupil-r" class="pupil" cx="115" cy="82" r="3.6" fill="#241c14"/>
-    <circle cx="86.4" cy="80.4" r="1" fill="#fff" opacity="0.85"/>
-    <circle cx="116.4" cy="80.4" r="1" fill="#fff" opacity="0.85"/>
+    <ellipse cx="85" cy="83" rx="7.2" ry="7.8" fill="#f4efe1"/>
+    <ellipse cx="115" cy="83" rx="7.2" ry="7.8" fill="#f4efe1"/>
+    <circle id="pupil-l" class="pupil" cx="85" cy="83" r="4" fill="#3a2712"/>
+    <circle id="pupil-r" class="pupil" cx="115" cy="83" r="4" fill="#3a2712"/>
+    <circle cx="86.8" cy="81" r="1.2" fill="#fff" opacity="0.9"/>
+    <circle cx="116.8" cy="81" r="1.2" fill="#fff" opacity="0.9"/>
+    <circle cx="83.2" cy="85" r="0.7" fill="#fff" opacity="0.6"/>
+    <circle cx="113.2" cy="85" r="0.7" fill="#fff" opacity="0.6"/>
 
-    <path d="M83 100 Q100 110 117 100" stroke="#7a4c30" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M74 70 Q85 61 96 68" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M104 68 Q115 61 126 70" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M83 101 Q100 111 117 101" stroke="#7a4c30" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M73 68 Q85 58 97 66" stroke="#4a4d54" stroke-width="4.2" fill="none" stroke-linecap="round"/>
+    <path d="M103 66 Q115 58 127 68" stroke="#4a4d54" stroke-width="4.2" fill="none" stroke-linecap="round"/>
 
     <!-- braco + martelo -->
     <path d="M150 150 C168 158 178 172 176 190 L160 196 C158 178 150 168 138 160 Z" fill="url(#robeGrad)"/>
-    <g id="gavel-arm" transform="translate(150,152) rotate(-28)">
-      <rect x="-6" y="-34" width="12" height="34" rx="4" fill="url(#gvlWood)"/>
-      <rect x="-20" y="-46" width="40" height="18" rx="5" fill="url(#gvlWood)"/>
-      <rect x="-20" y="-40" width="40" height="4" rx="2" fill="#3a2308" opacity="0.5"/>
-      <rect x="-20" y="-46" width="40" height="5" rx="2.5" fill="#f2d9ad" opacity="0.5"/>
+    <g id="gavel-arm" transform="translate(150,150) rotate(-25)">
+      <rect x="-5" y="-38" width="10" height="38" rx="4" fill="url(#gvlWood)"/>
+      <ellipse cx="0" cy="-48" rx="23" ry="13" fill="url(#gvlWood)"/>
+      <ellipse cx="0" cy="-52" rx="23" ry="5.5" fill="#f5ddb0" opacity="0.6"/>
+      <ellipse cx="0" cy="-44" rx="23" ry="5" fill="#3a2308" opacity="0.35"/>
       <!-- faisca de impacto, só aparece durante o "bang" -->
       <g class="spark" opacity="0">
-        <path d="M-24 -37 L-34 -44 M-24 -37 L-36 -34 M-24 -37 L-30 -26" stroke="#e3c063" stroke-width="2" stroke-linecap="round"/>
+        <path d="M-27 -48 L-38 -54 M-27 -48 L-40 -44 M-27 -48 L-34 -32" stroke="#e3c063" stroke-width="2" stroke-linecap="round"/>
       </g>
     </g>
   </svg>
@@ -1179,6 +1298,7 @@
 </div>
 <div class="taunt" id="taunt" aria-hidden="true"></div>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="cursor-ring" id="cursor-ring" aria-hidden="true"></div>
 <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
 <canvas id="confetti"></canvas>
 
@@ -1207,6 +1327,16 @@
       headers: headers,
       body: options.body ? JSON.stringify(options.body) : undefined
     });
+  }
+
+  // chama uma função Postgres pública (RPC) exposta via PostgREST — usada
+  // para leituras agregadas que não expõem dado pessoal de aluno (ranking,
+  // estatística de erro por pergunta), sem precisar da função "teacher".
+  function sbRpc(name, params){
+    return sbRest('/rpc/' + name, { method: 'POST', body: params || {} })
+      .then(function(res){
+        return res.json().then(function(data){ return { ok: res.ok, data: data }; });
+      });
   }
 
   function teacherCall(action, payload){
@@ -1248,10 +1378,19 @@
     "Faltam só alguns segundos... ou não.",
     "Se fosse fácil, não caía na OAB.",
     "Recesso forense não existe aqui, continue!",
-    "O relógio do fórum não perdoa ninguém."
+    "O relógio do fórum não perdoa ninguém.",
+    "A banca aguarda sua manifestação, causídico(a).",
+    "Vixe, o juiz já pegou o martelo de leve.",
+    "Pensa com carinho, isso vira jurisprudência.",
+    "Silêncio no plenário... só o relógio correndo mesmo.",
+    "Convicção também conta pontos, hein.",
+    "O escrivão já está anotando sua demora.",
+    "Ninguém disse que ser jurista seria fácil.",
+    "Respira. Lê de novo. Decide."
   ];
 
-  var TOTAL_TIME = 30;
+  var TOTAL_TIME = 45;
+  var MAX_LIVES = 10;
   var state = {};
   var timerInterval = null;
   var lastTauntIdx = -1;
@@ -1262,6 +1401,7 @@
     intro: document.getElementById('screen-intro'),
     quiz: document.getElementById('screen-quiz'),
     result: document.getElementById('screen-result'),
+    ranking: document.getElementById('screen-ranking'),
     teacher: document.getElementById('screen-teacher'),
     registerForm: document.getElementById('register-form'),
     regName: document.getElementById('reg-name'),
@@ -1273,11 +1413,19 @@
     btnStart: document.getElementById('btn-start'),
     btnNext: document.getElementById('btn-next'),
     btnRestart: document.getElementById('btn-restart'),
+    btnViewRanking: document.getElementById('btn-view-ranking'),
+    btnBackFromRanking: document.getElementById('btn-back-from-ranking'),
+    rankingList: document.getElementById('ranking-list'),
+    rankingEmpty: document.getElementById('ranking-empty'),
+    rankingSubtitle: document.getElementById('ranking-subtitle'),
     qIndex: document.getElementById('q-index'),
     qTotal: document.getElementById('q-total'),
     scoreVal: document.getElementById('score-val'),
+    scoreStat: document.getElementById('score-stat'),
     streakVal: document.getElementById('streak-val'),
     livesBox: document.getElementById('lives-box'),
+    livesBar: document.getElementById('lives-bar'),
+    livesCountVal: document.getElementById('lives-count-val'),
     progressFill: document.getElementById('progress-fill'),
     timerFill: document.getElementById('timer-fill'),
     timerText: document.getElementById('timer-text'),
@@ -1294,6 +1442,7 @@
     pupilL: document.getElementById('pupil-l'),
     pupilR: document.getElementById('pupil-r'),
     cursorDot: document.getElementById('cursor-dot'),
+    cursorRing: document.getElementById('cursor-ring'),
     taunt: document.getElementById('taunt'),
     toast: document.getElementById('toast'),
     resultEyebrow: document.getElementById('result-eyebrow'),
@@ -1321,8 +1470,12 @@
 
     tabBtnNotas: document.getElementById('tab-btn-notas'),
     tabBtnPerguntas: document.getElementById('tab-btn-perguntas'),
+    tabBtnErros: document.getElementById('tab-btn-erros'),
     tabNotas: document.getElementById('tab-notas'),
     tabPerguntas: document.getElementById('tab-perguntas'),
+    tabErros: document.getElementById('tab-erros'),
+    errorStatsList: document.getElementById('error-stats-list'),
+    btnRefreshErrors: document.getElementById('btn-refresh-errors'),
     turmaBtn4: document.getElementById('turma-btn-4'),
     turmaBtn6: document.getElementById('turma-btn-6'),
     questionSearch: document.getElementById('question-search'),
@@ -1376,13 +1529,14 @@
   var INSTITUTIONAL_DOMAIN = '';
 
   function showScreen(name){
-    [els.register, els.intro, els.quiz, els.result, els.teacher].forEach(function(s){ s.classList.remove('active'); });
+    [els.register, els.intro, els.quiz, els.result, els.ranking, els.teacher].forEach(function(s){ s.classList.remove('active'); });
     els[name].classList.add('active');
     window.scrollTo(0,0);
   }
 
   function resetState(){
-    state = { index:0, score:0, streak:0, lives:3, correct:0, answered:false };
+    state = { index:0, score:0, streak:0, lives:MAX_LIVES, correct:0, answered:false };
+    buildLivesBar();
   }
 
   // ---------- audio (sem assets externos) ----------
@@ -1413,14 +1567,27 @@
     loadQuestion();
   }
 
+  function buildLivesBar(){
+    els.livesBar.innerHTML = '';
+    for(var i=0;i<MAX_LIVES;i++){
+      var seg = document.createElement('span');
+      seg.className = 'seg';
+      els.livesBar.appendChild(seg);
+    }
+  }
+
   function renderHud(){
     els.qIndex.textContent = state.index + 1;
     els.scoreVal.textContent = state.score;
     els.streakVal.textContent = state.streak;
     els.progressFill.style.width = ((state.index)/quizData.length*100) + '%';
-    var hearts = els.livesBox.querySelectorAll('span');
-    hearts.forEach(function(h, i){
-      h.classList.toggle('lost', i >= state.lives);
+    els.livesCountVal.textContent = state.lives;
+    var segs = els.livesBar.querySelectorAll('.seg');
+    segs.forEach(function(seg, i){
+      seg.classList.remove('warn','danger','lost');
+      if(i >= state.lives){ seg.classList.add('lost'); }
+      else if(state.lives <= Math.ceil(MAX_LIVES*0.3)){ seg.classList.add('danger'); }
+      else if(state.lives <= Math.ceil(MAX_LIVES*0.6)){ seg.classList.add('warn'); }
     });
   }
 
@@ -1454,13 +1621,21 @@
   function startTimer(){
     clearInterval(timerInterval);
     var timeLeft = TOTAL_TIME;
+    state.timeLeft = timeLeft;
     tauntTimeoutsFired = {};
+    var tauntCheckpoints = [
+      Math.round(TOTAL_TIME * 0.8),
+      Math.round(TOTAL_TIME * 0.45),
+      Math.round(TOTAL_TIME * 0.18)
+    ];
     updateTimerBar(timeLeft);
     timerInterval = setInterval(function(){
       timeLeft--;
+      state.timeLeft = timeLeft;
       updateTimerBar(timeLeft);
-      if(timeLeft === 17 && !tauntTimeoutsFired[17]){ tauntTimeoutsFired[17]=true; showTaunt(); }
-      if(timeLeft === 8 && !tauntTimeoutsFired[8]){ tauntTimeoutsFired[8]=true; showTaunt(); }
+      tauntCheckpoints.forEach(function(cp){
+        if(timeLeft === cp && !tauntTimeoutsFired[cp]){ tauntTimeoutsFired[cp] = true; showTaunt(); }
+      });
       if(timeLeft <= 0){
         clearInterval(timerInterval);
         if(!state.answered) selectAnswer(-1);
@@ -1475,8 +1650,8 @@
     els.timerFill.classList.remove('warn','danger');
     els.timerText.classList.remove('warn','danger');
     els.timerText.textContent = shown + 's';
-    if(t <= 10){ els.timerFill.classList.add('danger'); els.timerText.classList.add('danger'); }
-    else if(t <= 18){ els.timerFill.classList.add('warn'); els.timerText.classList.add('warn'); }
+    if(t <= TOTAL_TIME * 0.22){ els.timerFill.classList.add('danger'); els.timerText.classList.add('danger'); }
+    else if(t <= TOTAL_TIME * 0.4){ els.timerFill.classList.add('warn'); els.timerText.classList.add('warn'); }
   }
 
   function selectAnswer(idx){
@@ -1509,12 +1684,26 @@
       buttons[correctPos].classList.remove('dim');
     }
 
+    // log da resposta individual (para o professor ver quais perguntas mais derrubam a turma)
+    if(item.id){
+      sbRest('/quiz_answers', {
+        method: 'POST',
+        headers: { 'Prefer': 'return=minimal' },
+        body: { question_id: item.id, turma: student.turma, is_correct: isCorrect }
+      }).catch(function(){ /* estatística é best-effort, não trava o quiz */ });
+    }
+
     if(isCorrect){
       state.correct++;
       state.streak++;
-      var bonus = 100 + (state.streak-1) * 10;
-      state.score += bonus;
+      var base = 100;
+      var streakBonus = Math.min(state.streak-1, 10) * 10;
+      var speedBonus = Math.round((state.timeLeft||0) / TOTAL_TIME * 60);
+      var total = base + streakBonus + speedBonus;
+      state.score += total;
       sfxCorrect();
+      var breakdown = 'base ' + base + (streakBonus ? ' + sequência ' + streakBonus : '') + (speedBonus ? ' + agilidade ' + speedBonus : '');
+      showScorePopup('+' + total, breakdown, true);
       if(state.correct === 6 || state.correct === 14 || state.correct === 22 || state.correct === 30){
         showToast('🏅 Nova patente em vista! Continue assim.');
         burstConfetti(40);
@@ -1523,11 +1712,13 @@
       state.streak = 0;
       state.lives--;
       sfxWrong();
+      showScorePopup('honorários retidos', idx < 0 ? 'prazo perdido' : '', false);
     }
 
     els.explanationText.textContent = item.exp;
     els.explanation.classList.add('show');
     els.resultAnnouncer.textContent = (isCorrect ? 'Resposta correta.' : 'Resposta incorreta.') + ' Fundamentação: ' + item.exp;
+    showJudgeReaction(isCorrect, idx < 0);
     renderHud();
 
     if(state.lives <= 0){
@@ -1536,6 +1727,50 @@
     }else{
       els.btnNext.style.display = 'inline-block';
     }
+  }
+
+  function showScorePopup(text, breakdown, positive){
+    var old = els.scoreStat.querySelector('.score-popup');
+    if(old) old.remove();
+    var pop = document.createElement('div');
+    pop.className = 'score-popup ' + (positive ? 'pos' : 'neg');
+    pop.innerHTML = escapeHtml(text) + (breakdown ? '<span class="brk">' + escapeHtml(breakdown) + '</span>' : '');
+    els.scoreStat.appendChild(pop);
+    setTimeout(function(){ pop.remove(); }, 1150);
+  }
+
+  var judgeReactionsCorrect = [
+    "Deferido! Fundamentação impecável.",
+    "É isso aí — a banca aprova.",
+    "Precedente firmado. Próximo caso!",
+    "Sentença mantida. Boa tese.",
+    "O tribunal reconhece seu esforço processual.",
+    "Aplausos discretos da bancada. Continue."
+  ];
+  var judgeReactionsWrong = [
+    "Indeferido. Recurso não conhecido.",
+    "Faltou fundamentação nessa peça.",
+    "O juiz balança a cabeça, discordando.",
+    "Objeção da própria consciência jurídica.",
+    "Vamos revisar a doutrina, hein?",
+    "Isso não vai passar nem em embargos."
+  ];
+  var judgeReactionsTimeout = [
+    "Preclusão! O prazo é peremptório.",
+    "Silêncio também é resposta — e custa caro.",
+    "Revelia parcial: o tempo venceu antes de você."
+  ];
+  var lastReactionIdx = -1;
+  function showJudgeReaction(isCorrect, wasTimeout){
+    var pool = wasTimeout ? judgeReactionsTimeout : (isCorrect ? judgeReactionsCorrect : judgeReactionsWrong);
+    var idx;
+    do{ idx = Math.floor(Math.random()*pool.length); }while(idx===lastReactionIdx && pool.length>1);
+    lastReactionIdx = idx;
+    els.taunt.textContent = pool[idx];
+    els.taunt.classList.remove('show');
+    void els.taunt.offsetWidth;
+    els.taunt.classList.add('show');
+    setTimeout(function(){ els.taunt.classList.remove('show'); }, 2600);
   }
 
   els.btnNext.addEventListener('click', function(){
@@ -1554,11 +1789,32 @@
   });
 
   function rankFor(pct, revelia){
-    if(revelia) return { rank:'Revel(a)', msg:'Seus recursos se esgotaram e o processo foi julgado à revelia. Isso acontece até com os melhores estagiários — releia a fundamentação de cada questão e tente recorrer.' };
-    if(pct >= 90) return { rank:'Juiz(a) Togado(a)', msg:'Sentença mantida em todas as instâncias. Domínio sólido de Direito Empresarial — a banca está impressionada.' };
-    if(pct >= 70) return { rank:'Sócio(a) Sênior', msg:'Boa fundamentação na maioria dos processos. Falta pouco para a toga — revise os pontos que escaparam.' };
-    if(pct >= 40) return { rank:'Associado(a) Júnior', msg:'Base razoável, mas alguns despachos saíram equivocados. Vale revisar sociedades, títulos de crédito e falência.' };
-    return { rank:'Estagiário(a) em Apuros', msg:'O processo foi turbulento, mas todo jurista começa assim. Releia as fundamentações e tente recorrer da sentença.' };
+    function pick(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    if(revelia) return { rank:'Revel(a)', msg: pick([
+      'Seus recursos se esgotaram e o processo foi julgado à revelia. Isso acontece até com os melhores estagiários — releia a fundamentação de cada questão e tente recorrer.',
+      'A banca bateu o martelo antes da hora. Volte com mais preparo e recorra dessa sentença.',
+      'Dez recursos não foram suficientes hoje. Mas todo processo admite recurso — bora de novo?'
+    ]) };
+    if(pct >= 90) return { rank:'Juiz(a) Togado(a)', msg: pick([
+      'Sentença mantida em todas as instâncias. Domínio sólido de Direito Empresarial — a banca está impressionada.',
+      'Unanimidade da turma julgadora. Você não decide casos, você os antecipa.',
+      'Jurisprudência formada em seu nome. Poucos chegam a esse patamar de fundamentação.'
+    ]) };
+    if(pct >= 70) return { rank:'Sócio(a) Sênior', msg: pick([
+      'Boa fundamentação na maioria dos processos. Falta pouco para a toga — revise os pontos que escaparam.',
+      'Cliente satisfeito, honorários em dia. Só falta lapidar alguns detalhes técnicos.',
+      'Você já discute de igual para igual com a banca. Mais um empurrão e vira magistrado(a).'
+    ]) };
+    if(pct >= 40) return { rank:'Associado(a) Júnior', msg: pick([
+      'Base razoável, mas alguns despachos saíram equivocados. Vale revisar sociedades, títulos de crédito e falência.',
+      'Meio caminho andado. A petição tem argumento, mas precisa de mais lastro doutrinário.',
+      'Está no caminho certo, mas a banca ainda pede mais fundamentação nas próximas teses.'
+    ]) };
+    return { rank:'Estagiário(a) em Apuros', msg: pick([
+      'O processo foi turbulento, mas todo jurista começa assim. Releia as fundamentações e tente recorrer da sentença.',
+      'Hoje não foi o dia da toga. Ninguém nasce sabendo — nem os desembargadores.',
+      'A banca recomenda: revisão geral da matéria antes do próximo plantão.'
+    ]) };
   }
 
   function endQuiz(finished){
@@ -1653,6 +1909,52 @@
     els.regEmail.value = student.email;
     els.regTurma.value = student.turma;
   });
+
+  // ---------- ranking da turma (público, sem dado pessoal) ----------
+  els.btnViewRanking.addEventListener('click', function(){
+    showScreen('ranking');
+    loadRanking();
+  });
+  els.btnBackFromRanking.addEventListener('click', function(){
+    showScreen('result');
+  });
+
+  function loadRanking(){
+    var turmaLabel = student.turma === '4' ? '4° período' : '6° período';
+    els.rankingSubtitle.textContent = 'Os honorários mais altos já arrecadados na turma do ' + turmaLabel + '.';
+    els.rankingList.innerHTML = '<p class="roster-empty">Carregando o placar...</p>';
+    els.rankingEmpty.style.display = 'none';
+
+    sbRpc('get_leaderboard', { p_turma: student.turma }).then(function(res){
+      if(!res.ok || !Array.isArray(res.data)){
+        els.rankingList.innerHTML = '';
+        els.rankingEmpty.style.display = 'block';
+        els.rankingEmpty.textContent = 'Ranking ainda não disponível para esta turma. Peça ao professor para configurar essa função no banco.';
+        return;
+      }
+      var list = res.data;
+      if(list.length === 0){
+        els.rankingList.innerHTML = '';
+        els.rankingEmpty.style.display = 'block';
+        els.rankingEmpty.textContent = 'Ainda não há ninguém no ranking desta turma. Seja o primeiro a abrir um processo!';
+        return;
+      }
+      var medals = ['🥇','🥈','🥉'];
+      els.rankingList.innerHTML = list.map(function(row, i){
+        var topClass = i === 0 ? 'top1' : i === 1 ? 'top2' : i === 2 ? 'top3' : '';
+        var posLabel = medals[i] || ('#' + (i+1));
+        return '<div class="rank-row ' + topClass + '">' +
+          '<span class="pos">' + posLabel + '</span>' +
+          '<span class="rname">' + escapeHtml(row.display_name || 'Anônimo(a)') + '</span>' +
+          '<span class="rmeta"><span class="rscore">' + (row.score!=null?row.score:'—') + '</span>' + (row.correct!=null?row.correct+'/'+row.total:'') + '</span>' +
+        '</div>';
+      }).join('');
+    }).catch(function(){
+      els.rankingList.innerHTML = '';
+      els.rankingEmpty.style.display = 'block';
+      els.rankingEmpty.textContent = 'Não foi possível carregar o ranking agora. Tente de novo em instantes.';
+    });
+  }
 
   // ---------- persistência (painel do professor) ----------
   // A senha padrão inicial é "direito2026" (armazenada com hash no banco).
@@ -1865,14 +2167,15 @@
   var teacherQuestions = [];
 
   function refreshActiveTab(){
-    var isNotas = els.tabNotas.style.display !== 'none';
-    if(isNotas){
+    if(currentTeacherTab === 'notas'){
       loadAttempts();
-    }else{
+    }else if(currentTeacherTab === 'perguntas'){
       loadQuestionBank(activeTurma).then(function(list){
         teacherQuestions = list;
         renderQuestionManager();
       });
+    }else if(currentTeacherTab === 'erros'){
+      loadQuestionErrorStats();
     }
   }
 
@@ -1886,17 +2189,57 @@
   els.turmaBtn4.addEventListener('click', function(){ setActiveTurma('4'); });
   els.turmaBtn6.addEventListener('click', function(){ setActiveTurma('6'); });
 
+  var currentTeacherTab = 'notas';
   function switchTeacherTab(tab){
-    var isNotas = tab === 'notas';
-    els.tabNotas.style.display = isNotas ? 'block' : 'none';
-    els.tabPerguntas.style.display = isNotas ? 'none' : 'block';
-    els.tabBtnNotas.classList.toggle('active', isNotas);
-    els.tabBtnPerguntas.classList.toggle('active', !isNotas);
+    currentTeacherTab = tab;
+    els.tabNotas.style.display = tab === 'notas' ? 'block' : 'none';
+    els.tabPerguntas.style.display = tab === 'perguntas' ? 'block' : 'none';
+    els.tabErros.style.display = tab === 'erros' ? 'block' : 'none';
+    els.tabBtnNotas.classList.toggle('active', tab === 'notas');
+    els.tabBtnPerguntas.classList.toggle('active', tab === 'perguntas');
+    els.tabBtnErros.classList.toggle('active', tab === 'erros');
     hideQuestionForm();
     refreshActiveTab();
   }
   els.tabBtnNotas.addEventListener('click', function(){ switchTeacherTab('notas'); });
   els.tabBtnPerguntas.addEventListener('click', function(){ switchTeacherTab('perguntas'); });
+  els.tabBtnErros.addEventListener('click', function(){ switchTeacherTab('erros'); });
+  els.btnRefreshErrors.addEventListener('click', loadQuestionErrorStats);
+
+  function errorPillClass(rate){
+    if(rate >= 50) return 'low';
+    if(rate >= 25) return 'mid';
+    return '';
+  }
+
+  function loadQuestionErrorStats(){
+    els.errorStatsList.innerHTML = '<p class="roster-empty">Carregando estatísticas...</p>';
+    sbRpc('get_question_stats', { p_turma: activeTurma }).then(function(res){
+      if(!res.ok || !Array.isArray(res.data)){
+        els.errorStatsList.innerHTML = '<p class="roster-empty">Não foi possível carregar. Confirme se a função get_question_stats já foi criada no banco.</p>';
+        return;
+      }
+      var list = res.data.filter(function(q){ return q.total_answers > 0; });
+      if(list.length === 0){
+        els.errorStatsList.innerHTML = '<p class="roster-empty">Ainda não há respostas registradas para esta turma.</p>';
+        return;
+      }
+      els.errorStatsList.innerHTML = list.map(function(q){
+        return '<div class="error-row">' +
+          '<div class="error-row-main">' +
+            '<div class="qrow-topic">' + escapeHtml(q.topic || 'Sem matéria') + '</div>' +
+            '<div class="qrow-text">' + escapeHtml(q.question) + '</div>' +
+          '</div>' +
+          '<div class="error-row-meta">' +
+            '<span class="pill ' + errorPillClass(q.error_rate) + '">' + q.error_rate + '% de erro</span><br>' +
+            q.wrong_answers + ' de ' + q.total_answers + ' respostas' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }).catch(function(){
+      els.errorStatsList.innerHTML = '<p class="roster-empty">Não foi possível carregar as estatísticas agora.</p>';
+    });
+  }
 
   function escapeAttr(s){ return escapeHtml(s).replace(/\n/g,' '); }
 
@@ -2130,9 +2473,9 @@
         var ex = Math.cos(angle) * reach;
         var ey = Math.sin(angle) * reach * 0.7;
         els.pupilL.setAttribute('cx', (85 + ex).toFixed(1));
-        els.pupilL.setAttribute('cy', (82 + ey).toFixed(1));
+        els.pupilL.setAttribute('cy', (83 + ey).toFixed(1));
         els.pupilR.setAttribute('cx', (115 + ex).toFixed(1));
-        els.pupilR.setAttribute('cy', (82 + ey).toFixed(1));
+        els.pupilR.setAttribute('cy', (83 + ey).toFixed(1));
       }
 
       // spotlight sobre o documento visível no momento
@@ -2153,33 +2496,45 @@
     });
   }
 
-  // ---------- cursor customizado (morphing) ----------
+  // ---------- cursor customizado: ponto + anel com atraso, minimalista ----------
   if(fineCursor && !reducedMotion){
     document.documentElement.classList.add('has-custom-cursor');
     var cx = window.innerWidth/2, cy = window.innerHeight/2;
-    var dotX = cx, dotY = cy;
+    var dotX = cx, dotY = cy, ringX = cx, ringY = cy;
     els.cursorDot.classList.add('visible');
+    els.cursorRing.classList.add('visible');
 
     document.addEventListener('mousemove', function(e){
       cx = e.clientX; cy = e.clientY;
     });
+
     (function animateCursor(){
-      dotX += (cx - dotX) * 0.35;
-      dotY += (cy - dotY) * 0.35;
+      dotX += (cx - dotX) * 0.55;
+      dotY += (cy - dotY) * 0.55;
+      ringX += (cx - ringX) * 0.16;
+      ringY += (cy - ringY) * 0.16;
       els.cursorDot.style.transform = 'translate(' + dotX.toFixed(1) + 'px,' + dotY.toFixed(1) + 'px) translate(-50%,-50%)';
+      els.cursorRing.style.left = ringX.toFixed(1) + 'px';
+      els.cursorRing.style.top = ringY.toFixed(1) + 'px';
       requestAnimationFrame(animateCursor);
     })();
 
-    document.addEventListener('mousedown', function(){ els.cursorDot.classList.add('cursor-press'); });
-    document.addEventListener('mouseup', function(){ els.cursorDot.classList.remove('cursor-press'); });
+    document.addEventListener('mousedown', function(){
+      els.cursorRing.classList.add('cursor-press');
+    });
+    document.addEventListener('mouseup', function(){
+      els.cursorRing.classList.remove('cursor-press');
+    });
 
     document.addEventListener('mouseover', function(e){
-      if(e.target.closest('button, a, input, select, textarea, .option, [role="group"] .option')){
+      if(e.target.closest('button, a, input, select, textarea, .option')){
+        els.cursorRing.classList.add('cursor-hover');
         els.cursorDot.classList.add('cursor-hover');
       }
     });
     document.addEventListener('mouseout', function(e){
       if(e.target.closest('button, a, input, select, textarea, .option')){
+        els.cursorRing.classList.remove('cursor-hover');
         els.cursorDot.classList.remove('cursor-hover');
       }
     });
