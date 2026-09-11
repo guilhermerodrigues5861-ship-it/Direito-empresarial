@@ -48,6 +48,13 @@
     pointer-events:none;
     z-index:0;
   }
+  body::after{
+    content:"";
+    position:fixed; inset:0;
+    background:radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.35) 100%);
+    pointer-events:none;
+    z-index:0;
+  }
 
   .watermark{
     position:fixed;
@@ -59,6 +66,22 @@
     z-index:0;
     line-height:1;
     user-select:none;
+  }
+
+  #ambient{
+    position:fixed; inset:0;
+    width:100%; height:100%;
+    z-index:0;
+    pointer-events:none;
+  }
+  .light-rays{
+    position:fixed; inset:0;
+    z-index:0;
+    pointer-events:none;
+    background:
+      linear-gradient(115deg, transparent 30%, rgba(227,192,99,0.05) 42%, transparent 54%),
+      linear-gradient(100deg, transparent 60%, rgba(227,192,99,0.035) 70%, transparent 82%);
+    mix-blend-mode:screen;
   }
 
   #app{
@@ -128,7 +151,12 @@
   .topbar .case-no{opacity:0.85;}
 
   .screen{display:none; width:100%; max-width:760px;}
-  .screen.active{display:block;}
+  #screen-teacher{max-width:980px;}
+  .screen.active{display:block; animation:screenIn .45s cubic-bezier(.2,.8,.3,1);}
+  @keyframes screenIn{
+    from{opacity:0; transform:translateY(14px) scale(0.985);}
+    to{opacity:1; transform:translateY(0) scale(1);}
+  }
 
   /* ===== documento / card ===== */
   .doc{
@@ -673,21 +701,35 @@
   /* ===== painel do professor ===== */
   .teacher-doc{max-width:920px;}
   .teacher-gate{max-width:380px; margin:0 auto;}
+
+  .teacher-letterhead{
+    display:flex; align-items:center; gap:10px;
+    font-family:var(--mono); font-size:0.68rem; letter-spacing:0.05em;
+    color:var(--stamp-red-dark); opacity:0.8;
+    padding-bottom:10px; margin-bottom:14px;
+    border-bottom:1px solid var(--paper-shadow);
+  }
+  .teacher-letterhead .seal-mini{font-size:1rem;}
+
   .teacher-topbar{
-    display:flex; justify-content:space-between; align-items:center;
-    gap:10px; margin-bottom:18px; flex-wrap:wrap;
+    display:flex; justify-content:space-between; align-items:flex-end;
+    gap:10px; margin-bottom:22px; flex-wrap:wrap;
   }
   .teacher-stats{
-    display:grid; grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
-    gap:10px; margin-bottom:20px;
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px; margin-bottom:24px;
   }
   .teacher-stats div{
-    background:rgba(0,0,0,0.06);
-    border-radius:4px; padding:12px 10px; text-align:center;
+    position:relative;
+    background:linear-gradient(155deg, rgba(255,255,255,0.5), rgba(255,255,255,0.08));
+    border:1px solid var(--paper-shadow);
+    border-radius:5px; padding:16px 14px; text-align:left;
     font-family:var(--mono);
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
   }
-  .teacher-stats .num{display:block; font-size:1.3rem; font-weight:700; color:var(--stamp-red-dark);}
-  .teacher-stats .lbl{font-size:0.66rem; opacity:0.75;}
+  .teacher-stats .ic{position:absolute; top:12px; right:12px; font-size:1.1rem; opacity:0.55;}
+  .teacher-stats .num{display:block; font-size:1.55rem; font-weight:700; color:var(--stamp-red-dark); line-height:1.1;}
+  .teacher-stats .lbl{font-size:0.68rem; opacity:0.75; display:block; margin-top:4px;}
   .teacher-toolbar{display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap; align-items:center;}
   .teacher-toolbar input[type=text]{
     flex:1; min-width:180px;
@@ -697,22 +739,30 @@
   }
   .btn.small{padding:9px 16px; font-size:0.8rem; box-shadow:0 4px 0 var(--ink), 0 6px 12px rgba(0,0,0,0.35);}
   .btn.small:active{box-shadow:0 2px 0 var(--ink);}
-  .table-wrap{overflow-x:auto; margin-bottom:8px;}
+  .table-wrap{
+    overflow:auto; margin-bottom:8px;
+    max-height:520px;
+    border:1px solid var(--paper-shadow);
+    border-radius:5px;
+  }
   table.roster{
     width:100%; border-collapse:collapse;
     font-family:var(--serif); font-size:0.86rem;
   }
+  table.roster thead{position:sticky; top:0; z-index:2;}
   table.roster th{
-    text-align:left; font-family:var(--mono); font-size:0.68rem;
-    letter-spacing:0.03em; color:var(--stamp-red-dark);
-    padding:8px 10px; border-bottom:2px solid var(--paper-shadow);
+    text-align:left; font-family:var(--mono); font-size:0.66rem;
+    letter-spacing:0.04em; color:var(--paper-text);
+    background:linear-gradient(180deg, var(--ink-3), var(--ink-2));
+    padding:11px 12px;
     white-space:nowrap;
   }
+  table.roster tbody tr:nth-child(even) td{background:rgba(0,0,0,0.035);}
   table.roster td{
-    padding:9px 10px; border-bottom:1px solid rgba(0,0,0,0.08);
+    padding:10px 12px; border-bottom:1px solid rgba(0,0,0,0.08);
     vertical-align:top;
   }
-  table.roster tr:hover td{background:rgba(0,0,0,0.03);}
+  table.roster tr:hover td{background:rgba(199,154,61,0.12) !important;}
   table.roster td.num{font-family:var(--mono); font-weight:700;}
   .roster-empty{
     text-align:center; padding:34px 10px; opacity:0.7;
@@ -726,9 +776,9 @@
   .pill.low{background:rgba(165,52,43,0.15); color:var(--stamp-red-dark);}
   .pill.mid{background:rgba(199,154,61,0.2); color:#8a681f;}
 
-  .tabs-row{display:flex; gap:8px; margin-top:14px; flex-wrap:wrap;}
-  .tab-btn{opacity:0.55;}
-  .tab-btn.active{opacity:1;}
+  .tabs-row{display:flex; gap:4px; margin-top:14px; flex-wrap:wrap; background:rgba(0,0,0,0.05); padding:4px; border-radius:6px;}
+  .tabs-row .tab-btn{opacity:0.6; background:transparent; box-shadow:none; color:var(--ink-text);}
+  .tabs-row .tab-btn.active{opacity:1; background:linear-gradient(180deg, var(--ink-3), var(--ink-2)); color:var(--paper-text); box-shadow:0 4px 10px rgba(0,0,0,0.25);}
   .btn.gold-outline{
     background:transparent;
     border:1.5px solid var(--gold);
@@ -878,6 +928,8 @@
 <body>
 
 <div class="watermark" aria-hidden="true">⚖️</div>
+<canvas id="ambient" aria-hidden="true"></canvas>
+<div class="light-rays" aria-hidden="true"></div>
 
 <div id="app">
   <div class="topbar">
@@ -1065,6 +1117,7 @@
       </div>
 
       <div id="teacher-dashboard" style="display:none;">
+        <div class="teacher-letterhead"><span class="seal-mini">⚖️</span> Secretaria da Vara Empresarial — Painel de Acompanhamento Docente</div>
         <div class="teacher-topbar">
           <div>
             <p class="intro-eyebrow" style="margin-bottom:2px;">Painel do professor</p>
@@ -2050,10 +2103,10 @@
     list.forEach(function(a){ uniqueStudents[(a.email||'').toLowerCase()] = true; });
 
     els.teacherStats.innerHTML =
-      '<div><span class="num">' + total + '</span><span class="lbl">processos julgados</span></div>' +
-      '<div><span class="num">' + Object.keys(uniqueStudents).length + '</span><span class="lbl">alunos distintos</span></div>' +
-      '<div><span class="num">' + avgPct + '%</span><span class="lbl">aproveitamento médio</span></div>' +
-      '<div><span class="num">' + bestScore + '</span><span class="lbl">melhor honorário</span></div>';
+      '<div><span class="ic">⚖️</span><span class="num">' + total + '</span><span class="lbl">processos julgados</span></div>' +
+      '<div><span class="ic">👥</span><span class="num">' + Object.keys(uniqueStudents).length + '</span><span class="lbl">alunos distintos</span></div>' +
+      '<div><span class="ic">📊</span><span class="num">' + avgPct + '%</span><span class="lbl">aproveitamento médio</span></div>' +
+      '<div><span class="ic">🏆</span><span class="num">' + bestScore + '</span><span class="lbl">melhor honorário</span></div>';
 
     if(total === 0){
       els.rosterBody.innerHTML = '';
@@ -2494,6 +2547,46 @@
       lastClientY = e.clientY;
       if(!rafPending){ rafPending = true; requestAnimationFrame(updateEffects); }
     });
+  }
+
+  // ---------- atmosfera ambiente: poeira dourada flutuante ----------
+  if(!reducedMotion){
+    var ambientCanvas = document.getElementById('ambient');
+    var actx = ambientCanvas.getContext('2d');
+    function resizeAmbient(){ ambientCanvas.width = window.innerWidth; ambientCanvas.height = window.innerHeight; }
+    window.addEventListener('resize', resizeAmbient);
+    resizeAmbient();
+
+    var motes = [];
+    var MOTE_COUNT = Math.min(46, Math.round((window.innerWidth * window.innerHeight) / 26000));
+    for(var mi=0; mi<MOTE_COUNT; mi++){
+      motes.push({
+        x: Math.random()*ambientCanvas.width,
+        y: Math.random()*ambientCanvas.height,
+        r: 0.6 + Math.random()*1.6,
+        vy: -0.06 - Math.random()*0.14,
+        vx: (Math.random()-0.5)*0.05,
+        alpha: 0.08 + Math.random()*0.18,
+        phase: Math.random()*Math.PI*2
+      });
+    }
+
+    function tickAmbient(t){
+      actx.clearRect(0,0,ambientCanvas.width,ambientCanvas.height);
+      motes.forEach(function(m){
+        m.y += m.vy;
+        m.x += m.vx + Math.sin(t/4000 + m.phase)*0.04;
+        if(m.y < -10){ m.y = ambientCanvas.height + 10; m.x = Math.random()*ambientCanvas.width; }
+        if(m.x < -10) m.x = ambientCanvas.width + 10;
+        if(m.x > ambientCanvas.width + 10) m.x = -10;
+        actx.beginPath();
+        actx.arc(m.x, m.y, m.r, 0, Math.PI*2);
+        actx.fillStyle = 'rgba(227,192,99,' + m.alpha.toFixed(2) + ')';
+        actx.fill();
+      });
+      requestAnimationFrame(tickAmbient);
+    }
+    requestAnimationFrame(tickAmbient);
   }
 
   // ---------- cursor customizado: ponto + anel com atraso, minimalista ----------
