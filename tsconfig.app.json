@@ -18,6 +18,5 @@
     "noFallthroughCasesInSwitch": true,
     "exactOptionalPropertyTypes": false
   },
-  "include": ["."],
-  "exclude": ["node_modules", "supabase"]
+  "include": ["src"]
 }
