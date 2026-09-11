@@ -241,6 +241,26 @@
   .btn.gold:active{box-shadow:0 3px 0 #8a681f;}
   .btn:disabled{opacity:0.5; cursor:not-allowed; transform:none;}
 
+  /* ===== acessibilidade: foco visível e leitura por leitor de tela ===== */
+  .sr-only{
+    position:absolute; width:1px; height:1px;
+    padding:0; margin:-1px; overflow:hidden;
+    clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+  .btn:focus-visible,
+  .option:focus-visible,
+  .field input:focus-visible,
+  .field select:focus-visible,
+  .qform input:focus-visible,
+  .qform textarea:focus-visible,
+  .teacher-toolbar input:focus-visible,
+  .pass-toggle:focus-visible,
+  .teacher-link button:focus-visible{
+    outline:3px solid var(--gold-light);
+    outline-offset:2px;
+  }
+  .option:focus-visible{transform:translateX(3px);}
+
   /* ===== quiz hud ===== */
   .hud{
     display:flex;
@@ -276,14 +296,26 @@
     transition:width .4s ease;
   }
 
+  .timer-row{
+    display:flex; align-items:center; gap:10px;
+    margin:0 0 26px;
+  }
   .timer-track{
     height:10px; width:100%;
     background:rgba(0,0,0,0.15);
     border-radius:6px;
     overflow:hidden;
-    margin:0 0 26px;
     border:1px solid rgba(0,0,0,0.15);
+    flex:1;
   }
+  .timer-text{
+    font-family:var(--mono); font-weight:700; font-size:0.85rem;
+    color:var(--ink-3); flex:none; min-width:38px; text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .timer-text.warn{color:#8a681f;}
+  .timer-text.danger{color:var(--stamp-red-dark); animation:pulseDanger 1s ease-in-out infinite;}
+  @keyframes pulseDanger{0%,100%{opacity:1;}50%{opacity:0.45;}}
   .timer-fill{
     height:100%;
     width:100%;
@@ -393,20 +425,33 @@
   .next-row{display:flex; justify-content:flex-end; margin-top:22px;}
 
   /* ===== juiz / taunts ===== */
-  .judge{
+  .judge-stage{
     position:fixed;
     bottom:0; right:18px;
+    z-index:20;
+    perspective:1000px;
+    transform-style:preserve-3d;
+    pointer-events:none;
+    transition:transform .18s cubic-bezier(.2,.8,.3,1);
+    will-change:transform;
+  }
+  .judge{
     width:150px;
     height:auto;
-    z-index:20;
     filter:drop-shadow(0 14px 18px rgba(0,0,0,0.55));
     animation:float 3.8s ease-in-out infinite;
     transform-origin:bottom center;
-    pointer-events:none;
   }
   .judge svg{display:block; width:100%; height:auto;}
   @keyframes float{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(-10px) rotate(-1deg);}}
   .judge.bang{animation:judgeBang 0.5s ease-out;}
+  .judge.bang .spark{animation:sparkPop 0.5s ease-out;}
+  @keyframes sparkPop{
+    0%{opacity:0; transform:scale(0.4);}
+    25%{opacity:1; transform:scale(1.15);}
+    100%{opacity:0; transform:scale(1.4);}
+  }
+  .pupil{transition:cx .12s ease-out, cy .12s ease-out;}
   @keyframes judgeBang{
     0%{transform:rotate(0deg);}
     30%{transform:rotate(-6deg) translateY(-4px);}
@@ -522,11 +567,31 @@
     color:var(--ink-text);
     box-shadow:0 2px 4px rgba(0,0,0,0.06) inset;
   }
-  .field input:focus{outline:none; border-color:var(--ink-3); background:rgba(255,255,255,0.7);}
+  .field input:focus{border-color:var(--ink-3); background:rgba(255,255,255,0.7);}
   .field .hint{font-size:0.78rem; opacity:0.7; margin-top:5px;}
   .field.error input{border-color:var(--stamp-red);}
   .field .err-msg{display:none; color:var(--stamp-red-dark); font-size:0.78rem; margin-top:5px; font-family:var(--mono);}
   .field.error .err-msg{display:block;}
+  .field .pass-row{position:relative;}
+  .field .pass-row input{padding-right:64px;}
+  .pass-toggle{
+    position:absolute; top:50%; right:6px; transform:translateY(-50%);
+    background:none; border:none; cursor:pointer;
+    font-family:var(--mono); font-size:0.7rem; letter-spacing:0.02em;
+    color:var(--ink-3); padding:8px 8px;
+  }
+  .pass-toggle:hover{color:var(--stamp-red-dark);}
+  .select-input{
+    width:100%; font-family:var(--serif); font-size:1rem;
+    padding:12px 14px; border:1.5px solid var(--paper-shadow); border-radius:3px;
+    background:rgba(255,255,255,0.45); color:var(--ink-text);
+  }
+  .select-input:focus{border-color:var(--ink-3); background:rgba(255,255,255,0.7);}
+  .start-hint{
+    font-family:var(--mono); font-size:0.78rem; color:var(--stamp-red-dark);
+    margin-top:12px; display:none; line-height:1.5;
+  }
+  .start-hint.show{display:block;}
 
   .teacher-link{
     margin-top:18px;
@@ -670,12 +735,63 @@
     pointer-events:none; z-index:40;
   }
 
+  /* ===== spotlight que acompanha o cursor sobre o documento ===== */
+  .doc{ isolation:isolate; }
+  .doc-spotlight{
+    position:absolute; inset:0;
+    border-radius:inherit;
+    pointer-events:none;
+    opacity:0;
+    transition:opacity .3s ease;
+    background:radial-gradient(220px circle at var(--sx,50%) var(--sy,50%), rgba(255,255,255,0.5), transparent 65%);
+    mix-blend-mode:soft-light;
+    z-index:0;
+  }
+  .doc-stack:hover .doc-spotlight{opacity:1;}
+  .doc > *:not(.doc-spotlight){position:relative; z-index:1;}
+
+  /* ===== cursor customizado (morphing) — só em ponteiros de precisão ===== */
+  .has-custom-cursor, .has-custom-cursor *{cursor:none !important;}
+  .cursor-dot{
+    position:fixed; top:0; left:0;
+    width:16px; height:16px;
+    border-radius:50%;
+    background:var(--gold-light);
+    mix-blend-mode:difference;
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    transition:width .22s cubic-bezier(.2,.8,.3,1), height .22s cubic-bezier(.2,.8,.3,1), border-radius .22s ease, background .2s ease, opacity .2s ease;
+    opacity:0;
+  }
+  .cursor-dot.visible{opacity:1;}
+  .cursor-dot.cursor-hover{
+    width:46px; height:46px;
+    background:transparent;
+    border:1.5px solid var(--gold-light);
+    border-radius:30% 70% 65% 35%/40% 45% 55% 60%;
+  }
+  .cursor-dot.cursor-press{width:12px; height:12px;}
+
+  @media (prefers-reduced-motion: reduce){
+    .judge-stage{transition:none;}
+  }
+
+  @media (max-width:700px){
+    .judge-stage{right:8px;}
+    .judge{width:110px; opacity:0.9;}
+    .taunt{bottom:118px; max-width:200px;}
+  }
   @media (max-width:520px){
     .doc{padding:32px 22px 28px;}
     .result-actions{flex-direction:column;}
-    .judge{width:96px; right:10px;}
-    .taunt{right:8px; bottom:106px; max-width:190px;}
+    .judge-stage{right:6px;}
+    .judge{width:80px;}
+    .taunt{right:6px; bottom:92px; max-width:170px; font-size:0.8rem;}
     .doc-stack::before, .doc-stack::after{display:none;}
+  }
+  @media (max-width:380px){
+    .judge-stage, .taunt{display:none;}
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -685,7 +801,7 @@
 </head>
 <body>
 
-<div class="watermark">⚖️</div>
+<div class="watermark" aria-hidden="true">⚖️</div>
 
 <div id="app">
   <div class="topbar">
@@ -698,6 +814,7 @@
     <div class="doc-stack">
     <div class="doc">
       <div class="clip"></div>
+      <div class="doc-spotlight" aria-hidden="true"></div>
       <p class="intro-eyebrow">Qualificação das partes</p>
       <h1 class="intro-title">Antes de tudo, quem está aqui?</h1>
       <p class="ementa">
@@ -707,23 +824,23 @@
       <form id="register-form" novalidate>
         <div class="field" id="field-name">
           <label for="reg-name">Nome completo</label>
-          <input type="text" id="reg-name" autocomplete="name" placeholder="Ex.: Maria da Silva Souza" required>
-          <span class="err-msg">Informe seu nome completo.</span>
+          <input type="text" id="reg-name" autocomplete="name" placeholder="Ex.: Maria da Silva Souza" required aria-describedby="err-name" aria-invalid="false">
+          <span class="err-msg" id="err-name">Informe seu nome completo.</span>
         </div>
         <div class="field" id="field-email">
           <label for="reg-email">E-mail institucional</label>
-          <input type="email" id="reg-email" autocomplete="email" placeholder="Ex.: maria.souza@unifenas.br" required>
+          <input type="email" id="reg-email" autocomplete="email" placeholder="Ex.: maria.souza@unifenas.br" required aria-describedby="email-hint err-email" aria-invalid="false">
           <p class="hint" id="email-hint">Use o e-mail fornecido pela sua instituição de ensino.</p>
-          <span class="err-msg">Informe um e-mail institucional válido.</span>
+          <span class="err-msg" id="err-email">Informe um e-mail institucional válido.</span>
         </div>
         <div class="field" id="field-turma">
           <label for="reg-turma">Turma</label>
-          <select id="reg-turma" required style="width:100%; font-family:var(--serif); font-size:1rem; padding:12px 14px; border:1.5px solid var(--paper-shadow); border-radius:3px; background:rgba(255,255,255,0.45); color:var(--ink-text);">
+          <select id="reg-turma" required class="select-input" aria-describedby="err-turma" aria-invalid="false">
             <option value="" disabled selected>Selecione sua turma</option>
             <option value="4">4° período</option>
             <option value="6">6° período</option>
           </select>
-          <span class="err-msg">Selecione sua turma.</span>
+          <span class="err-msg" id="err-turma">Selecione sua turma.</span>
         </div>
         <button type="submit" class="btn gold">Confirmar e abrir o processo →</button>
       </form>
@@ -737,8 +854,9 @@
     <div class="doc-stack">
     <div class="doc">
       <div class="clip"></div>
+      <div class="doc-spotlight" aria-hidden="true"></div>
       <p class="intro-eyebrow">Autos em segredo de justiça</p>
-      <h1 class="intro-title"><span class="gavel">
+      <h1 class="intro-title"><span class="gavel" aria-hidden="true">
         <svg width="1em" height="1em" viewBox="0 0 40 40" style="vertical-align:-0.15em">
           <defs><linearGradient id="gvl" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stop-color="#c98d4f"/><stop offset="0.5" stop-color="#8a5a2b"/><stop offset="1" stop-color="#5c3a1a"/>
@@ -761,6 +879,7 @@
         <li><span class="ic">🏅</span> Acertos em sequência valem bônus e podem render uma promoção de patente ao final.</li>
       </ul>
       <button class="btn gold" id="btn-start">Abrir o processo →</button>
+      <p class="start-hint" id="start-hint" role="status">Nenhuma pergunta cadastrada para esta turma ainda. Avise seu professor.</p>
     </div>
     </div>
   </section>
@@ -784,13 +903,19 @@
     <div class="doc-stack">
     <div class="doc">
       <div class="clip"></div>
-      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+      <div class="doc-spotlight" aria-hidden="true"></div>
+      <div class="timer-row">
+        <div class="timer-track" role="presentation"><div class="timer-fill" id="timer-fill"></div></div>
+        <span class="timer-text" id="timer-text" aria-hidden="true">30s</span>
+      </div>
       <p class="case-tag" id="case-tag">Matéria: Direito Empresarial</p>
       <p class="question-text" id="question-text">Carregando petição...</p>
+      <p class="hint" id="kbd-hint" style="margin:-14px 0 16px;">Dica: use as teclas 1–4 ou A–D para responder mais rápido.</p>
       <div class="stamp-wrap">
-        <div class="options" id="options-box"></div>
+        <div class="options" id="options-box" role="group" aria-label="Alternativas"></div>
         <div class="explanation" id="explanation"><b>Fundamentação</b><span id="explanation-text"></span></div>
       </div>
+      <p class="sr-only" id="result-announcer" aria-live="assertive" role="status"></p>
       <div class="next-row">
         <button class="btn" id="btn-next" style="display:none;">Próximo processo →</button>
       </div>
@@ -803,6 +928,7 @@
     <div class="doc-stack">
     <div class="doc" style="text-align:center;">
       <div class="clip"></div>
+      <div class="doc-spotlight" aria-hidden="true"></div>
       <p class="result-eyebrow" id="result-eyebrow">Sentença</p>
       <h2 class="result-title" id="result-title">Processo julgado</h2>
       <div class="seal"><span class="rank" id="result-rank">Estagiário(a)</span></div>
@@ -825,6 +951,7 @@
     <div class="doc-stack teacher-doc">
     <div class="doc">
       <div class="clip"></div>
+      <div class="doc-spotlight" aria-hidden="true"></div>
 
       <div id="teacher-gate" class="teacher-gate">
         <p class="intro-eyebrow">Acesso restrito</p>
@@ -832,8 +959,11 @@
         <p class="ementa" style="max-width:100%;">Digite a senha de acesso para acompanhar as notas da turma.</p>
         <div class="field" id="field-teacher-pass">
           <label for="teacher-pass">Senha</label>
-          <input type="password" id="teacher-pass" autocomplete="off">
-          <span class="err-msg">Senha incorreta.</span>
+          <div class="pass-row">
+            <input type="password" id="teacher-pass" autocomplete="off" aria-describedby="err-teacher-pass" aria-invalid="false">
+            <button type="button" class="pass-toggle" id="btn-toggle-pass" aria-pressed="false">Mostrar</button>
+          </div>
+          <span class="err-msg" id="err-teacher-pass">Senha incorreta.</span>
         </div>
         <button class="btn gold" id="btn-teacher-login">Entrar →</button>
         <div class="teacher-link"><button type="button" id="btn-back-from-gate">← Voltar</button></div>
@@ -902,7 +1032,7 @@
               <input type="hidden" id="qf-id">
               <div class="field">
                 <label for="qf-turma">Turma</label>
-                <select id="qf-turma" style="width:100%; font-family:var(--serif); font-size:0.95rem; padding:9px 12px; border:1.5px solid var(--paper-shadow); border-radius:3px; background:rgba(255,255,255,0.45); color:var(--ink-text);">
+                <select id="qf-turma" class="select-input" style="font-size:0.95rem; padding:9px 12px;">
                   <option value="4">4° período</option>
                   <option value="6">6° período</option>
                 </select>
@@ -937,16 +1067,17 @@
   </section>
 </div>
 
+<div class="judge-stage" id="judge-stage" aria-hidden="true">
 <div class="judge" id="judge">
   <svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
     <defs>
       <linearGradient id="robeGrad" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#333a5c"/>
+        <stop offset="0" stop-color="#3d4670"/>
         <stop offset="0.5" stop-color="#1b2044"/>
         <stop offset="1" stop-color="#0c0f24"/>
       </linearGradient>
       <linearGradient id="robeShine" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#5763a3" stop-opacity="0.55"/>
+        <stop offset="0" stop-color="#7c88c9" stop-opacity="0.6"/>
         <stop offset="1" stop-color="#5763a3" stop-opacity="0"/>
       </linearGradient>
       <radialGradient id="skinGrad" cx="0.38" cy="0.32" r="0.75">
@@ -955,21 +1086,36 @@
         <stop offset="1" stop-color="#b9814f"/>
       </radialGradient>
       <linearGradient id="gvlWood" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#d19a5c"/>
+        <stop offset="0" stop-color="#e3b378"/>
         <stop offset="0.5" stop-color="#93602f"/>
         <stop offset="1" stop-color="#603c1a"/>
       </linearGradient>
       <radialGradient id="benchGrad" cx="0.5" cy="0" r="1">
-        <stop offset="0" stop-color="#4a3319"/>
+        <stop offset="0" stop-color="#5a3f22"/>
         <stop offset="1" stop-color="#26190c"/>
+      </radialGradient>
+      <radialGradient id="haloGlow" cx="0.5" cy="0.5" r="0.5">
+        <stop offset="0" stop-color="#e3c063" stop-opacity="0.35"/>
+        <stop offset="1" stop-color="#e3c063" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="medallionGrad" cx="0.35" cy="0.3" r="0.8">
+        <stop offset="0" stop-color="#fff3cf"/>
+        <stop offset="0.5" stop-color="#e3c063"/>
+        <stop offset="1" stop-color="#8a681f"/>
       </radialGradient>
     </defs>
 
+    <!-- halo de luz ambiente atrás da figura -->
+    <ellipse cx="100" cy="95" rx="95" ry="100" fill="url(#haloGlow)"/>
     <ellipse cx="100" cy="252" rx="82" ry="10" fill="#000" opacity="0.28"/>
 
-    <!-- bancada -->
+    <!-- bancada com veios de madeira -->
     <rect x="14" y="200" width="172" height="52" rx="6" fill="url(#benchGrad)"/>
-    <rect x="14" y="200" width="172" height="10" rx="4" fill="#5c3f20"/>
+    <rect x="14" y="200" width="172" height="10" rx="4" fill="#6b4a26"/>
+    <path d="M20 214 Q100 208 180 214" stroke="#1c1108" stroke-width="1.4" opacity="0.4" fill="none"/>
+    <path d="M20 228 Q100 236 180 228" stroke="#1c1108" stroke-width="1.4" opacity="0.35" fill="none"/>
+    <path d="M20 242 Q100 237 180 242" stroke="#1c1108" stroke-width="1.2" opacity="0.3" fill="none"/>
+    <text x="100" y="245" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="7" fill="#e3c063" opacity="0.75" letter-spacing="1">VARA EMPRESARIAL</text>
 
     <!-- toga / corpo -->
     <path d="M46 250 C40 175 55 118 100 112 C145 118 160 175 154 250 Z" fill="url(#robeGrad)"/>
@@ -977,35 +1123,63 @@
     <path d="M100 112 C93 150 93 205 98 250" stroke="#000" stroke-opacity="0.25" stroke-width="3" fill="none"/>
     <path d="M78 122 C70 165 68 210 72 250" stroke="#000" stroke-opacity="0.18" stroke-width="4" fill="none"/>
     <path d="M122 122 C130 165 132 210 128 250" stroke="#000" stroke-opacity="0.18" stroke-width="4" fill="none"/>
+    <path d="M60 150 C56 185 58 218 62 248" stroke="#000" stroke-opacity="0.12" stroke-width="3" fill="none"/>
+    <path d="M140 150 C144 185 142 218 138 248" stroke="#000" stroke-opacity="0.12" stroke-width="3" fill="none"/>
+    <!-- botoes da toga -->
+    <circle cx="100" cy="168" r="2.6" fill="#e3c063" opacity="0.85"/>
+    <circle cx="100" cy="190" r="2.6" fill="#e3c063" opacity="0.85"/>
+    <circle cx="100" cy="212" r="2.6" fill="#e3c063" opacity="0.85"/>
 
     <!-- gola / colarinho -->
     <path d="M78 118 L100 138 L122 118 L128 130 L100 152 L72 130 Z" fill="#f4efe1"/>
+    <path d="M78 118 L100 138 L122 118" fill="none" stroke="#c9c2ac" stroke-width="1"/>
     <rect x="93" y="128" width="14" height="34" fill="#f4efe1"/>
     <rect x="93" y="128" width="14" height="34" fill="#000" opacity="0.06"/>
+    <!-- medalhao da justica -->
+    <circle cx="100" cy="146" r="8.5" fill="url(#medallionGrad)" stroke="#8a681f" stroke-width="1"/>
+    <text x="100" y="149" text-anchor="middle" font-family="Playfair Display, serif" font-size="9" fill="#5a3f0c">⚖</text>
 
     <!-- cabeca -->
     <ellipse cx="100" cy="82" rx="38" ry="42" fill="url(#skinGrad)"/>
-    <!-- cabelo/beca de juiz (touca) -->
+    <ellipse cx="82" cy="72" rx="12" ry="8" fill="#fff" opacity="0.18"/>
+    <!-- touca / peruca de juiz -->
     <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78 C138 55 122 44 100 44 C78 44 62 55 62 78 Z" fill="#12162e"/>
     <path d="M62 78 C58 40 78 18 100 18 C122 18 142 40 138 78" fill="none" stroke="#3b4374" stroke-width="2" opacity="0.6"/>
-    <!-- rosto -->
-    <ellipse cx="85" cy="82" rx="4.2" ry="5.2" fill="#241c14"/>
-    <ellipse cx="115" cy="82" rx="4.2" ry="5.2" fill="#241c14"/>
+    <path d="M64 55 Q100 40 136 55" fill="none" stroke="#3b4374" stroke-width="1.4" opacity="0.5"/>
+    <!-- cachos laterais da peruca -->
+    <ellipse cx="60" cy="88" rx="8" ry="16" fill="#12162e"/>
+    <ellipse cx="140" cy="88" rx="8" ry="16" fill="#12162e"/>
+
+    <!-- olhos: esclera + iris/pupila (movida via JS) -->
+    <ellipse cx="85" cy="82" rx="6.4" ry="6.8" fill="#f4efe1"/>
+    <ellipse cx="115" cy="82" rx="6.4" ry="6.8" fill="#f4efe1"/>
+    <circle id="pupil-l" class="pupil" cx="85" cy="82" r="3.6" fill="#241c14"/>
+    <circle id="pupil-r" class="pupil" cx="115" cy="82" r="3.6" fill="#241c14"/>
+    <circle cx="86.4" cy="80.4" r="1" fill="#fff" opacity="0.85"/>
+    <circle cx="116.4" cy="80.4" r="1" fill="#fff" opacity="0.85"/>
+
     <path d="M83 100 Q100 110 117 100" stroke="#7a4c30" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M74 70 Q85 63 96 69" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
-    <path d="M104 69 Q115 63 126 70" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M74 70 Q85 61 96 68" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M104 68 Q115 61 126 70" stroke="#3a2513" stroke-width="3" fill="none" stroke-linecap="round"/>
 
     <!-- braco + martelo -->
     <path d="M150 150 C168 158 178 172 176 190 L160 196 C158 178 150 168 138 160 Z" fill="url(#robeGrad)"/>
-    <g transform="translate(150,152) rotate(-28)">
+    <g id="gavel-arm" transform="translate(150,152) rotate(-28)">
       <rect x="-6" y="-34" width="12" height="34" rx="4" fill="url(#gvlWood)"/>
       <rect x="-20" y="-46" width="40" height="18" rx="5" fill="url(#gvlWood)"/>
-      <rect x="-20" y="-46" width="40" height="5" rx="2.5" fill="#f2d9ad" opacity="0.4"/>
+      <rect x="-20" y="-40" width="40" height="4" rx="2" fill="#3a2308" opacity="0.5"/>
+      <rect x="-20" y="-46" width="40" height="5" rx="2.5" fill="#f2d9ad" opacity="0.5"/>
+      <!-- faisca de impacto, só aparece durante o "bang" -->
+      <g class="spark" opacity="0">
+        <path d="M-24 -37 L-34 -44 M-24 -37 L-36 -34 M-24 -37 L-30 -26" stroke="#e3c063" stroke-width="2" stroke-linecap="round"/>
+      </g>
     </g>
   </svg>
 </div>
-<div class="taunt" id="taunt"></div>
-<div class="toast" id="toast"></div>
+</div>
+<div class="taunt" id="taunt" aria-hidden="true"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
 <canvas id="confetti"></canvas>
 
 <script>
@@ -1106,12 +1280,20 @@
     livesBox: document.getElementById('lives-box'),
     progressFill: document.getElementById('progress-fill'),
     timerFill: document.getElementById('timer-fill'),
+    timerText: document.getElementById('timer-text'),
+    resultAnnouncer: document.getElementById('result-announcer'),
+    startHint: document.getElementById('start-hint'),
+    btnTogglePass: document.getElementById('btn-toggle-pass'),
     caseTag: document.getElementById('case-tag'),
     questionText: document.getElementById('question-text'),
     optionsBox: document.getElementById('options-box'),
     explanation: document.getElementById('explanation'),
     explanationText: document.getElementById('explanation-text'),
     judge: document.getElementById('judge'),
+    judgeStage: document.getElementById('judge-stage'),
+    pupilL: document.getElementById('pupil-l'),
+    pupilR: document.getElementById('pupil-r'),
+    cursorDot: document.getElementById('cursor-dot'),
     taunt: document.getElementById('taunt'),
     toast: document.getElementById('toast'),
     resultEyebrow: document.getElementById('result-eyebrow'),
@@ -1287,11 +1469,14 @@
   }
 
   function updateTimerBar(t){
+    var shown = Math.max(0, t);
     var pct = Math.max(0, t/TOTAL_TIME*100);
     els.timerFill.style.width = pct + '%';
     els.timerFill.classList.remove('warn','danger');
-    if(t <= 10) els.timerFill.classList.add('danger');
-    else if(t <= 18) els.timerFill.classList.add('warn');
+    els.timerText.classList.remove('warn','danger');
+    els.timerText.textContent = shown + 's';
+    if(t <= 10){ els.timerFill.classList.add('danger'); els.timerText.classList.add('danger'); }
+    else if(t <= 18){ els.timerFill.classList.add('warn'); els.timerText.classList.add('warn'); }
   }
 
   function selectAnswer(idx){
@@ -1342,6 +1527,7 @@
 
     els.explanationText.textContent = item.exp;
     els.explanation.classList.add('show');
+    els.resultAnnouncer.textContent = (isCorrect ? 'Resposta correta.' : 'Resposta incorreta.') + ' Fundamentação: ' + item.exp;
     renderHud();
 
     if(state.lives <= 0){
@@ -1355,6 +1541,16 @@
   els.btnNext.addEventListener('click', function(){
     state.index++;
     loadQuestion();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if(!els.quiz.classList.contains('active') || state.answered) return;
+    var map = { '1':0, '2':1, '3':2, '4':3, 'a':0, 'b':1, 'c':2, 'd':3 };
+    var key = e.key.toLowerCase();
+    if(map.hasOwnProperty(key)){
+      var buttons = els.optionsBox.querySelectorAll('.option');
+      if(map[key] < buttons.length){ selectAnswer(map[key]); }
+    }
   });
 
   function rankFor(pct, revelia){
@@ -1402,6 +1598,8 @@
 
   function setFieldError(field, show){
     field.classList.toggle('error', !!show);
+    var input = field.querySelector('input, select');
+    if(input) input.setAttribute('aria-invalid', show ? 'true' : 'false');
   }
 
   els.registerForm.addEventListener('submit', function(e){
@@ -1430,6 +1628,7 @@
 
   els.btnStart.addEventListener('click', function(){
     els.btnStart.disabled = true;
+    els.startHint.classList.remove('show');
     var originalLabel = els.btnStart.textContent;
     els.btnStart.textContent = 'Abrindo o processo...';
     loadQuestionBank(student.turma).then(function(list){
@@ -1438,7 +1637,7 @@
       els.btnStart.disabled = false;
       els.btnStart.textContent = originalLabel;
       if(quizData.length === 0){
-        showToast('Nenhuma pergunta cadastrada para esta turma ainda.');
+        els.startHint.classList.add('show');
         return;
       }
       startQuiz();
@@ -1644,6 +1843,13 @@
     if(e.key === 'Enter') els.btnTeacherLogin.click();
   });
   els.teacherPass.addEventListener('input', function(){ setFieldError(els.fieldTeacherPass, false); });
+  els.btnTogglePass.addEventListener('click', function(){
+    var showing = els.teacherPass.type === 'text';
+    els.teacherPass.type = showing ? 'password' : 'text';
+    els.btnTogglePass.textContent = showing ? 'Mostrar' : 'Ocultar';
+    els.btnTogglePass.setAttribute('aria-pressed', showing ? 'false' : 'true');
+    els.teacherPass.focus();
+  });
   els.btnTeacherLogout.addEventListener('click', function(){
     teacherLoggedIn = false;
     teacherPassword = '';
@@ -1895,6 +2101,88 @@
       confettiRunning = false;
       ctx.clearRect(0,0,canvas.width,canvas.height);
     }
+  }
+
+  // ---------- personalidade e efeitos: paralaxe do juiz, olhos, spotlight e cursor ----------
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var fineCursor = window.matchMedia('(pointer: fine)').matches;
+
+  if(!reducedMotion){
+    var rafPending = false;
+    var lastClientX = window.innerWidth/2, lastClientY = window.innerHeight/2;
+
+    function updateEffects(){
+      rafPending = false;
+
+      // paralaxe 3D do juiz: inclina o "palco" conforme a posição do mouse na tela
+      var nx = (lastClientX / window.innerWidth) * 2 - 1;   // -1..1
+      var ny = (lastClientY / window.innerHeight) * 2 - 1;  // -1..1
+      els.judgeStage.style.transform =
+        'perspective(1000px) rotateX(' + (-ny * 8).toFixed(2) + 'deg) rotateY(' + (nx * 10).toFixed(2) + 'deg)';
+
+      // olhos seguem o cursor
+      var judgeRect = els.judgeStage.getBoundingClientRect();
+      if(judgeRect.width > 0){
+        var faceX = judgeRect.left + judgeRect.width * 0.5;
+        var faceY = judgeRect.top + judgeRect.height * 0.32;
+        var angle = Math.atan2(lastClientY - faceY, lastClientX - faceX);
+        var reach = 2.2;
+        var ex = Math.cos(angle) * reach;
+        var ey = Math.sin(angle) * reach * 0.7;
+        els.pupilL.setAttribute('cx', (85 + ex).toFixed(1));
+        els.pupilL.setAttribute('cy', (82 + ey).toFixed(1));
+        els.pupilR.setAttribute('cx', (115 + ex).toFixed(1));
+        els.pupilR.setAttribute('cy', (82 + ey).toFixed(1));
+      }
+
+      // spotlight sobre o documento visível no momento
+      var activeDoc = document.querySelector('.screen.active .doc');
+      if(activeDoc){
+        var r = activeDoc.getBoundingClientRect();
+        var px = ((lastClientX - r.left) / r.width * 100).toFixed(1);
+        var py = ((lastClientY - r.top) / r.height * 100).toFixed(1);
+        activeDoc.style.setProperty('--sx', px + '%');
+        activeDoc.style.setProperty('--sy', py + '%');
+      }
+    }
+
+    window.addEventListener('mousemove', function(e){
+      lastClientX = e.clientX;
+      lastClientY = e.clientY;
+      if(!rafPending){ rafPending = true; requestAnimationFrame(updateEffects); }
+    });
+  }
+
+  // ---------- cursor customizado (morphing) ----------
+  if(fineCursor && !reducedMotion){
+    document.documentElement.classList.add('has-custom-cursor');
+    var cx = window.innerWidth/2, cy = window.innerHeight/2;
+    var dotX = cx, dotY = cy;
+    els.cursorDot.classList.add('visible');
+
+    document.addEventListener('mousemove', function(e){
+      cx = e.clientX; cy = e.clientY;
+    });
+    (function animateCursor(){
+      dotX += (cx - dotX) * 0.35;
+      dotY += (cy - dotY) * 0.35;
+      els.cursorDot.style.transform = 'translate(' + dotX.toFixed(1) + 'px,' + dotY.toFixed(1) + 'px) translate(-50%,-50%)';
+      requestAnimationFrame(animateCursor);
+    })();
+
+    document.addEventListener('mousedown', function(){ els.cursorDot.classList.add('cursor-press'); });
+    document.addEventListener('mouseup', function(){ els.cursorDot.classList.remove('cursor-press'); });
+
+    document.addEventListener('mouseover', function(e){
+      if(e.target.closest('button, a, input, select, textarea, .option, [role="group"] .option')){
+        els.cursorDot.classList.add('cursor-hover');
+      }
+    });
+    document.addEventListener('mouseout', function(e){
+      if(e.target.closest('button, a, input, select, textarea, .option')){
+        els.cursorDot.classList.remove('cursor-hover');
+      }
+    });
   }
 
 })();
