@@ -1,0 +1,82 @@
+/*
+  Design tokens — sistema "Autos Judiciais".
+  Mantém a identidade original (papel envelhecido, tinta azul-noite,
+  carimbos vermelho/verde, selo dourado) mas com uma escala de cor e
+  espaçamento disciplinada, testada para contraste AA.
+*/
+:root {
+  /* --- cor: tinta (fundo escuro, telas de "audiência") --- */
+  --ink-950: #0a0d1e;
+  --ink-900: #10152c;
+  --ink-800: #1b2450;
+  --ink-700: #262f5c;
+  --ink-600: #333e78;
+
+  /* --- cor: papel (cartões de documento) --- */
+  --paper-100: #f6f1e0;
+  --paper-200: #efe8d1;
+  --paper-300: #e9e2cd;
+  --paper-400: #ded4b8;
+  --paper-shadow: #b9ac89;
+  --paper-ink: #201c10;
+  --paper-ink-soft: #4a4330;
+
+  /* --- cor: selos e status --- */
+  --stamp-red: #b23c31;
+  --stamp-red-dark: #7c241d;
+  --stamp-green: #2f7350;
+  --stamp-green-dark: #1e4d34;
+
+  /* --- cor: dourado (destaque/CTA) --- */
+  --gold-300: #e9c96e;
+  --gold-400: #d3a94a;
+  --gold-500: #c79a3d;
+  --gold-600: #a87c28;
+  --gold-ink: #241a05;
+
+  /* --- texto sobre fundo escuro --- */
+  --text-on-ink: #f2ecda;
+  --text-on-ink-muted: rgba(242, 236, 218, 0.72);
+  --text-on-ink-faint: rgba(242, 236, 218, 0.5);
+
+  /* --- tipografia --- */
+  --font-display: 'Playfair Display', Georgia, serif;
+  --font-serif: 'Lora', Georgia, serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.25rem;
+  --fs-xl: 1.75rem;
+  --fs-2xl: 2.25rem;
+  --fs-3xl: 3rem;
+
+  /* --- espaçamento: escala em múltiplos de 4px --- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+  --sp-16: 64px;
+
+  /* --- raio e sombra: consistentes em todo o app --- */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-pill: 999px;
+
+  --shadow-card: 0 20px 40px -18px rgba(0, 0, 0, 0.5);
+  --shadow-soft: 0 8px 24px -12px rgba(0, 0, 0, 0.35);
+  --shadow-focus: 0 0 0 3px rgba(211, 169, 74, 0.55);
+
+  /* --- transição: mesma curva/duração em tudo, exceto o juiz (assinatura) --- */
+  --ease-standard: cubic-bezier(0.2, 0.7, 0.3, 1);
+  --dur-fast: 140ms;
+  --dur-base: 220ms;
+  --dur-slow: 420ms;
+}

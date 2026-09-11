@@ -1,0 +1,279 @@
+.toolbar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.toolbar input[type='text'] {
+  flex: 1;
+  min-width: 180px;
+  font-family: var(--font-serif);
+  padding: 9px 12px;
+  border: 1.5px solid var(--paper-shadow);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--paper-ink);
+}
+.toolbar input[type='text']:focus {
+  border-color: var(--ink-700);
+  background: rgba(255, 255, 255, 0.7);
+  outline: none;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.statCard {
+  position: relative;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--paper-shadow);
+  border-radius: 5px;
+  padding: 16px 14px;
+  text-align: left;
+  font-family: var(--font-mono);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+.statCard .ic {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 1.1rem;
+  opacity: 0.55;
+}
+.statCard .num {
+  display: block;
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--stamp-red-dark);
+  line-height: 1.1;
+}
+.statCard .lbl {
+  font-size: 0.68rem;
+  opacity: 0.75;
+  display: block;
+  margin-top: 4px;
+}
+
+.tableWrap {
+  overflow: auto;
+  margin-bottom: 8px;
+  max-height: 520px;
+  border: 1px solid var(--paper-shadow);
+  border-radius: 5px;
+}
+.roster {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+}
+.roster thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.roster th {
+  text-align: left;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--text-on-ink);
+  background: linear-gradient(180deg, var(--ink-700), var(--ink-800));
+  padding: 11px 12px;
+  white-space: nowrap;
+}
+.roster tbody tr:nth-child(even) td {
+  background: rgba(0, 0, 0, 0.035);
+}
+.roster td {
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  vertical-align: top;
+}
+.roster tr:hover td {
+  background: rgba(199, 154, 61, 0.12) !important;
+}
+.roster td.num {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+.emptyState {
+  text-align: center;
+  padding: 34px 10px;
+  opacity: 0.7;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.emptyState.errorState {
+  color: var(--stamp-red-dark);
+  opacity: 0.9;
+}
+
+.pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  background: rgba(47, 115, 80, 0.15);
+  color: var(--stamp-green-dark);
+}
+.pill.low {
+  background: rgba(178, 60, 49, 0.15);
+  color: var(--stamp-red-dark);
+}
+.pill.mid {
+  background: rgba(199, 154, 61, 0.2);
+  color: var(--gold-600);
+}
+
+.qform {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px dashed var(--paper-shadow);
+  border-radius: 4px;
+  padding: 18px;
+  margin-bottom: 20px;
+}
+.qform label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--stamp-red-dark);
+  margin: 0 0 6px;
+}
+.qformRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+@media (max-width: 520px) {
+  .qformRow {
+    grid-template-columns: 1fr;
+  }
+}
+.qform input[type='text'],
+.qform select,
+.qform textarea {
+  width: 100%;
+  font-family: var(--font-serif);
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 1.5px solid var(--paper-shadow);
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--paper-ink);
+  resize: vertical;
+}
+.qform input[type='text']:focus,
+.qform select:focus,
+.qform textarea:focus {
+  border-color: var(--ink-700);
+  background: rgba(255, 255, 255, 0.7);
+  outline: none;
+}
+.qformField {
+  margin-bottom: 14px;
+}
+.qformOptions {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.qformOpt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.qformOpt input[type='radio'] {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--stamp-green-dark);
+}
+.qformOpt input[type='text'] {
+  flex: 1;
+  padding: 9px 12px;
+  font-size: 0.92rem;
+}
+.qformOpt .optLetter {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.72rem;
+  width: 20px;
+  text-align: center;
+  flex: none;
+  opacity: 0.7;
+}
+.qformActions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.qrow {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.qrowMain {
+  flex: 1;
+  min-width: 0;
+}
+.qrowTopic {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--stamp-red-dark);
+  margin-bottom: 3px;
+}
+.qrowText {
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.qrowActions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+  flex-wrap: wrap;
+}
+.qrowActions button {
+  background: none;
+  border: 1px solid var(--paper-shadow);
+  border-radius: 3px;
+  padding: 5px 10px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  color: var(--paper-ink);
+}
+.qrowActions button:hover {
+  border-color: var(--ink-700);
+}
+.qrowActions button.danger {
+  color: var(--stamp-red-dark);
+  border-color: var(--stamp-red);
+}
+
+.errorRow {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding: 12px 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+.errorRowMeta {
+  flex: none;
+  text-align: right;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  opacity: 0.75;
+}

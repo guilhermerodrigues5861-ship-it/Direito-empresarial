@@ -1,0 +1,113 @@
+.stack {
+  position: relative;
+  width: 100%;
+  max-width: var(--doc-max-width, 760px);
+  perspective: 1600px;
+}
+.stack::before,
+.stack::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--paper-400);
+  border-radius: 2px;
+  clip-path: polygon(0 0, calc(100% - 34px) 0, 100% 34px, 100% 100%, 0 100%);
+  box-shadow: var(--shadow-card);
+  z-index: 0;
+}
+.stack::before {
+  transform: translate(7px, 10px) rotate(1.4deg);
+  opacity: 0.9;
+}
+.stack::after {
+  transform: translate(-6px, 15px) rotate(-1.1deg);
+  background: var(--paper-shadow);
+  opacity: 0.55;
+}
+
+.doc {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  transform: rotateX(calc(2deg + var(--tilt-x, 0deg))) rotateY(calc(-0.6deg + var(--tilt-y, 0deg)));
+  transition: transform 320ms var(--ease-standard);
+  transform-style: preserve-3d;
+  background: linear-gradient(155deg, rgba(255, 255, 255, 0.35) 0%, rgba(255, 255, 255, 0) 18%), var(--paper-300);
+  color: var(--paper-ink);
+  border-radius: 2px;
+  padding: 44px 42px 38px;
+  box-shadow: 0 34px 64px -18px rgba(0, 0, 0, 0.6), 0 10px 20px -12px rgba(0, 0, 0, 0.4),
+    0 2px 0 var(--paper-shadow) inset;
+  clip-path: polygon(0 0, calc(100% - 34px) 0, 100% 34px, 100% 100%, 0 100%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .doc {
+    transition: none;
+  }
+}
+.doc::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 34px;
+  height: 34px;
+  background: linear-gradient(135deg, transparent 49%, var(--paper-shadow) 50%);
+}
+
+.clip {
+  position: absolute;
+  top: -14px;
+  left: 38px;
+  width: 58px;
+  height: 26px;
+  background: linear-gradient(180deg, #8b8f9a, #585b63);
+  border-radius: 4px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.4);
+}
+.clip::before,
+.clip::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #33353b;
+}
+.clip::before {
+  left: 9px;
+}
+.clip::after {
+  right: 9px;
+}
+
+.spotlight {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-standard);
+  background: radial-gradient(220px circle at var(--sx, 50%) var(--sy, 50%), rgba(255, 255, 255, 0.5), transparent 65%);
+  mix-blend-mode: soft-light;
+  z-index: 0;
+}
+.stack:hover .spotlight {
+  opacity: 1;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 520px) {
+  .doc {
+    padding: 32px 22px 28px;
+  }
+  .stack::before,
+  .stack::after {
+    display: none;
+  }
+}

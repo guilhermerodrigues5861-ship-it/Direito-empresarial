@@ -1,0 +1,52 @@
+.taunt {
+  position: fixed;
+  bottom: 158px;
+  right: 20px;
+  max-width: 230px;
+  background: var(--paper-300);
+  color: var(--paper-ink);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-family: var(--font-serif);
+  font-size: 0.86rem;
+  line-height: 1.4;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
+  z-index: 21;
+  opacity: 0;
+  transform: translateY(8px) scale(0.96);
+  transition: opacity var(--dur-base) var(--ease-standard), transform var(--dur-base) var(--ease-standard);
+}
+.taunt::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  right: 26px;
+  width: 16px;
+  height: 16px;
+  background: var(--paper-300);
+  transform: rotate(45deg);
+}
+.taunt.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+@media (max-width: 700px) {
+  .taunt {
+    bottom: 118px;
+    max-width: 200px;
+  }
+}
+@media (max-width: 520px) {
+  .taunt {
+    right: 6px;
+    bottom: 92px;
+    max-width: 170px;
+    font-size: 0.8rem;
+  }
+}
+@media (max-width: 380px) {
+  .taunt {
+    display: none;
+  }
+}

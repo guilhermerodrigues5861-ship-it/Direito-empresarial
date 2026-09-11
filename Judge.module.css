@@ -1,0 +1,100 @@
+.stage {
+  position: fixed;
+  bottom: 0;
+  right: 18px;
+  z-index: 20;
+  perspective: 1000px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+  transition: transform 180ms var(--ease-standard);
+  will-change: transform;
+}
+.judge {
+  width: 150px;
+  height: auto;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.55));
+  animation: float 3.8s ease-in-out infinite;
+  transform-origin: bottom center;
+}
+.judge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-10px) rotate(-1deg);
+  }
+}
+.judge.bang {
+  animation: judgeBang 0.5s ease-out;
+}
+.judge.bang .spark {
+  animation: sparkPop 0.5s ease-out;
+}
+@keyframes sparkPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  25% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+.pupil {
+  transition: cx 0.12s ease-out, cy 0.12s ease-out;
+}
+@keyframes judgeBang {
+  0% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(-6deg) translateY(-4px);
+  }
+  55% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage {
+    transition: none;
+  }
+  .judge {
+    animation: none;
+  }
+}
+@media (max-width: 700px) {
+  .stage {
+    right: 8px;
+  }
+  .judge {
+    width: 110px;
+    opacity: 0.9;
+  }
+}
+@media (max-width: 520px) {
+  .stage {
+    right: 6px;
+  }
+  .judge {
+    width: 80px;
+  }
+}
+@media (max-width: 380px) {
+  .stage {
+    display: none;
+  }
+}

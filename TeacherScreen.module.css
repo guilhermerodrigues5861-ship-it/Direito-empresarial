@@ -1,0 +1,123 @@
+.gateWrap {
+  max-width: 380px;
+  margin: 0 auto;
+}
+.title {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: 0 0 8px;
+}
+.lead {
+  font-size: 0.92rem;
+  line-height: 1.55;
+  margin: 0 0 22px;
+  opacity: 0.85;
+}
+.field {
+  margin-bottom: 18px;
+}
+.field label {
+  display: block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  letter-spacing: 0.03em;
+  color: var(--stamp-red-dark);
+  margin-bottom: 6px;
+}
+.passRow {
+  position: relative;
+}
+.input {
+  width: 100%;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  padding: 13px 14px;
+  border: 1.5px solid var(--paper-shadow);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.45);
+  color: var(--paper-ink);
+}
+.passRow .input {
+  padding-right: 68px;
+}
+.input:focus {
+  border-color: var(--ink-700);
+  background: rgba(255, 255, 255, 0.7);
+  outline: none;
+}
+.field.error .input {
+  border-color: var(--stamp-red);
+}
+.errMsg {
+  display: none;
+  color: var(--stamp-red-dark);
+  font-size: 0.78rem;
+  margin-top: 5px;
+  font-family: var(--font-mono);
+}
+.field.error .errMsg {
+  display: block;
+}
+.passToggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-700);
+  padding: 8px;
+}
+.passToggle:hover {
+  color: var(--stamp-red-dark);
+}
+.backLink {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.dashHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 6px;
+  flex-wrap: wrap;
+}
+.dashTitle {
+  font-size: 1.5rem;
+  margin: 0;
+}
+
+.turmaSwitch {
+  display: flex;
+  gap: 8px;
+  margin: 14px 0 4px;
+}
+
+.tabsRow {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 4px;
+  border-radius: 6px;
+}
+.tabBtn {
+  opacity: 0.6;
+  background: transparent;
+  box-shadow: none;
+  color: var(--paper-ink);
+}
+.tabBtn.active {
+  opacity: 1;
+  background: linear-gradient(180deg, var(--ink-700), var(--ink-800));
+  color: var(--text-on-ink);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}

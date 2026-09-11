@@ -1,0 +1,120 @@
+.title {
+  font-size: 1.9rem;
+  font-weight: 900;
+  margin: 0 0 10px;
+}
+.subtitle {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  max-width: 100%;
+  margin: 0 0 24px;
+}
+
+.podium {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  align-items: end;
+  gap: 10px;
+  margin: 0 0 28px;
+}
+.podiumSpot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 8px 16px;
+  border-radius: var(--radius-md) var(--radius-md) 4px 4px;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+.podiumSpot .medal {
+  font-size: 1.6rem;
+}
+.podiumSpot .name {
+  font-family: var(--font-serif);
+  font-weight: 700;
+  font-size: 0.85rem;
+  word-break: break-word;
+}
+.podiumSpot .score {
+  font-size: 1rem;
+  font-weight: 700;
+}
+.gold {
+  order: 2;
+  background: linear-gradient(180deg, rgba(233, 201, 110, 0.35), rgba(233, 201, 110, 0.08));
+  padding-top: 6px;
+}
+.silver {
+  order: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+.bronze {
+  order: 3;
+  background: rgba(178, 60, 49, 0.1);
+}
+@media (max-width: 480px) {
+  .podium {
+    grid-template-columns: 1fr;
+  }
+  .gold,
+  .silver,
+  .bronze {
+    order: initial;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  font-family: var(--font-serif);
+}
+.pos {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.95rem;
+  width: 26px;
+  text-align: center;
+  flex: none;
+  color: var(--ink-700);
+}
+.name {
+  flex: 1;
+  font-weight: 600;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.meta {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  text-align: right;
+  flex: none;
+  color: var(--stamp-red-dark);
+}
+.meta .score {
+  display: block;
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--paper-ink);
+}
+
+.empty {
+  text-align: center;
+  padding: 34px 10px;
+  opacity: 0.7;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+}
+.backLink {
+  margin-top: 18px;
+  text-align: center;
+}

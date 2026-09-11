@@ -1,0 +1,82 @@
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--stamp-red-dark);
+  margin: 0 0 10px;
+}
+.title {
+  font-size: clamp(1.9rem, 4.6vw, 3rem);
+  line-height: 1.05;
+  margin: 0 0 18px;
+  font-weight: 900;
+}
+.gavel {
+  display: inline-block;
+  transform-origin: 70% 70%;
+  animation: gavelBang 1.1s ease-out 0.15s 1;
+}
+@keyframes gavelBang {
+  0% {
+    transform: rotate(-38deg) translateY(-6px);
+  }
+  35% {
+    transform: rotate(-38deg) translateY(-6px);
+  }
+  45% {
+    transform: rotate(4deg) translateY(0);
+  }
+  52% {
+    transform: rotate(-6deg);
+  }
+  58% {
+    transform: rotate(2deg);
+  }
+  64% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+.lead {
+  font-size: 0.98rem;
+  line-height: 1.65;
+  max-width: 60ch;
+  margin: 0 0 22px;
+}
+.lead em {
+  font-style: italic;
+  color: var(--stamp-red-dark);
+}
+
+.rules {
+  list-style: none;
+  margin: 0 0 30px;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.rules li {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-size: 0.92rem;
+  line-height: 1.5;
+}
+.rules .ic {
+  font-size: 1.15rem;
+  flex: none;
+}
+
+.startHint {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  color: var(--stamp-red-dark);
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.backLink {
+  margin-top: 20px;
+  text-align: center;
+}
